@@ -18,6 +18,7 @@ type Page struct {
 	CaptureCredentials bool      `json:"capture_credentials" gorm:"column:capture_credentials"`
 	CapturePasswords   bool      `json:"capture_passwords" gorm:"column:capture_passwords"`
 	RedirectURL        string    `json:"redirect_url" gorm:"column:redirect_url"`
+	AnchorEncryption   bool      `json:"anchor_encryption" gorm:"column:anchor_encryption"`
 	ModifiedDate       time.Time `json:"modified_date"`
 }
 

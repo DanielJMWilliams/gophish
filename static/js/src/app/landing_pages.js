@@ -14,6 +14,7 @@ function save(idx) {
     page.html = editor.getData()
     page.capture_credentials = $("#capture_credentials_checkbox").prop("checked")
     page.capture_passwords = $("#capture_passwords_checkbox").prop("checked")
+    page.anchor_encryption = $("#anchor_encryption_checkbox").prop("checked")
     page.redirect_url = $("#redirect_url_input").val()
     if (idx != -1) {
         page.id = pages[idx].id
@@ -119,6 +120,7 @@ function edit(idx) {
         $("#html_editor").val(page.html)
         $("#capture_credentials_checkbox").prop("checked", page.capture_credentials)
         $("#capture_passwords_checkbox").prop("checked", page.capture_passwords)
+        $("#anchor_encryption_checkbox").prop("checked", page.anchor_encryption)
         $("#redirect_url_input").val(page.redirect_url)
         if (page.capture_credentials) {
             $("#capture_passwords").show()
