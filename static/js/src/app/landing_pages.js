@@ -6,7 +6,7 @@
 var pages = []
 
 
-// Save attempts to POST to /templates/
+// Save attempts to POST to /pages/
 function save(idx) {
     var page = {}
     page.name = $("#name").val()

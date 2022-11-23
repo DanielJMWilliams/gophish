@@ -122,6 +122,9 @@ func GetPageByName(n string, uid int64) (Page, error) {
 
 // PostPage creates a new page in the database.
 func PostPage(p *Page) error {
+	log.Infof("\n\nHELLO!!!!!")
+	log.Infof("Anchor encryption %t", p.AnchorEncryption)
+	log.Error(p.AnchorEncryption)
 	err := p.Validate()
 	if err != nil {
 		log.Error(err)
