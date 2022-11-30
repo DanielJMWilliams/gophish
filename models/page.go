@@ -122,13 +122,15 @@ func GetPageByName(n string, uid int64) (Page, error) {
 
 // PostPage creates a new page in the database.
 func PostPage(p *Page) error {
-	log.Infof("\n\nHELLO!!!!!")
-	log.Infof("Anchor encryption %t", p.AnchorEncryption)
-	log.Error(p.AnchorEncryption)
+	log.Infof("Anchor encryption %t", p.HTML)
 	err := p.Validate()
 	if err != nil {
 		log.Error(err)
 		return err
+	}
+	// Inject anchor encryption script into HTML if option checked
+	if p.AnchorEncryption {
+		AddAnchorEncryptionScript(p)
 	}
 	// Insert into the DB
 	err = db.Save(p).Error
@@ -136,6 +138,21 @@ func PostPage(p *Page) error {
 		log.Error(err)
 	}
 	return err
+}
+
+func AddAnchorEncryptionScript(p *Page) error {
+	p.HTML = p.HTML + "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
+	return nil
+
+	/*
+		d, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+		if err != nil {
+			return err
+		}
+		forms := d.Find("form")
+		forms = forms
+		return nil
+	*/
 }
 
 // PutPage edits an existing Page in the database.

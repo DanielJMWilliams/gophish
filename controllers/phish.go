@@ -83,7 +83,6 @@ func WithContactAddress(addr string) PhishingServerOption {
 
 // Start launches the phishing server, listening on the configured address.
 func (ps *PhishingServer) Start() {
-	log.Infof("START\n\n")
 	if ps.config.UseTLS {
 		// Only support TLS 1.2 and above - ref #1691, #1689
 		ps.server.TLSConfig = defaultTLSConfig
