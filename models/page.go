@@ -140,19 +140,13 @@ func PostPage(p *Page) error {
 	return err
 }
 
-func AddAnchorEncryptionScript(p *Page) error {
+func AddAnchorEncryptionScript(p *Page) {
 	p.HTML = p.HTML + "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
-	return nil
+}
+func RemoveAnchorEncryptionScript(p *Page) {
+	scriptString := "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
+	p.HTML = strings.Replace(p.HTML, scriptString, "", 1)
 
-	/*
-		d, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-		if err != nil {
-			return err
-		}
-		forms := d.Find("form")
-		forms = forms
-		return nil
-	*/
 }
 
 // PutPage edits an existing Page in the database.
@@ -162,6 +156,13 @@ func PutPage(p *Page) error {
 	if err != nil {
 		return err
 	}
+	// Inject anchor encryption script into HTML if option checked
+	if p.AnchorEncryption {
+		AddAnchorEncryptionScript(p)
+	} else {
+		RemoveAnchorEncryptionScript(p)
+	}
+
 	err = db.Where("id=?", p.Id).Save(p).Error
 	if err != nil {
 		log.Error(err)
