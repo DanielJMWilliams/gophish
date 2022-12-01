@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gophish/gophish/config"
+	ctx1 "github.com/gophish/gophish/context"
 	"github.com/gophish/gophish/models"
 )
 
@@ -83,6 +84,34 @@ func createTestData(t *testing.T) {
 	c.Groups = []models.Group{group}
 	models.PostCampaign(&c, c.UserId)
 	c.UpdateStatus(models.CampaignEmailsSent)
+}
+
+func TestEncrypt(t *testing.T) {
+	fmt.Println("DEBUG!!!")
+	payload := &encryptionRequest{
+		Text: "plaintext",
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
+	}
+	fmt.Println(payload)
+
+	testCtx := setupTest(t)
+
+	r := httptest.NewRequest(http.MethodPost, "/api/encrypt", bytes.NewBuffer(body))
+	r = ctx1.Set(r, "user", testCtx.admin)
+	w := httptest.NewRecorder()
+
+	testCtx.apiServer.Encrypt(w, r)
+	expected := http.StatusOK
+	fmt.Println(w.Body)
+	if w.Code != expected {
+		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
+	}
+
+	//TODO check correct encryption
+
 }
 
 func TestSiteImportBaseHref(t *testing.T) {
