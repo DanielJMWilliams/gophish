@@ -1,15 +1,18 @@
 package api
 
 import (
+	"crypto/aes"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 
 	log "github.com/gophish/gophish/logger"
+
 	"github.com/gophish/gophish/models"
 )
 
 type cryptoResponse struct {
-	text string `json:"text"`
+	Text string `json:"text"`
 }
 
 type encryptionRequest struct {
@@ -29,8 +32,36 @@ func (as *Server) Encrypt(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(w, models.Response{Success: false, Message: "Invalid request"}, http.StatusBadRequest)
 		return
 	}
-	log.Info(p.Text)
-	JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: "encrypted"}, http.StatusOK)
+	key := "thisis32bitlongpassphraseimusing"
+	encryptedMessage := EncryptAES([]byte(key), p.Text)
+	log.Info(encryptedMessage)
+	res := cryptoResponse{Text: encryptedMessage}
+	JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)
+}
+
+func EncryptAES(key []byte, plaintext string) string {
+	// create cipher
+	c, _ := aes.NewCipher(key)
+
+	// allocate space for ciphered data
+	out := make([]byte, len(plaintext))
+
+	// encrypt
+	c.Encrypt(out, []byte(plaintext))
+	// return hex string
+	return hex.EncodeToString(out)
+}
+
+func DecryptAES(key []byte, ct string) string {
+	ciphertext, _ := hex.DecodeString(ct)
+
+	c, _ := aes.NewCipher(key)
+
+	pt := make([]byte, len(ciphertext))
+	c.Decrypt(pt, ciphertext)
+
+	s := string(pt[:])
+	return s
 }
 
 /*

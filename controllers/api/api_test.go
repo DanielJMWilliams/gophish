@@ -89,7 +89,8 @@ func createTestData(t *testing.T) {
 func TestEncrypt(t *testing.T) {
 	fmt.Println("DEBUG!!!")
 	payload := &encryptionRequest{
-		Text: "plaintext",
+		Text: "This is a secret",
+		//Key : "thisis32bitlongpassphraseimusing",
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -105,12 +106,25 @@ func TestEncrypt(t *testing.T) {
 
 	testCtx.apiServer.Encrypt(w, r)
 	expected := http.StatusOK
+	fmt.Println("Body")
 	fmt.Println(w.Body)
 	if w.Code != expected {
 		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
 	}
-
+	resBytes := w.Body.Bytes()
+	println(resBytes)
+	//cryptoRes := cryptoResponse{}
+	var cryptoRes map[string]interface{}
+	if err := json.Unmarshal(resBytes, &cryptoRes); err != nil { // Parse []byte to go struct pointer
+		fmt.Println("Can not unmarshal JSON")
+	}
+	fmt.Println(cryptoRes)
+	fmt.Println(cryptoRes["data"])
 	//TODO check correct encryption
+	expectedEncryption := "145149d64a1a3c4025e67665001a316700"
+	if cryptoRes["data"] != expectedEncryption {
+		t.Fatalf("unexpected error code received. expected %s got %s", expectedEncryption, cryptoRes["text"])
+	}
 
 }
 

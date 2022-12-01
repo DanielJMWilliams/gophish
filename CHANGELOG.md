@@ -1,3 +1,8 @@
+# 01/12/2022 - Almost working encryption API
+* Made /api/encrypt endpoint in crypto.go
+* decrypt endpoint will be needed for the javascript SOC Evasion script to decrypt the encrypted landing pages
+
+
 # 30/11/2022 - Adding script tags to html 
 * Code now adds SOC Evasion script tags to HTML upon creation of new landing page
 ## TODO:
