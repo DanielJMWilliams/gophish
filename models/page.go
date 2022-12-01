@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/aes"
+	"encoding/hex"
 	"errors"
 	"strings"
 	"time"
@@ -157,9 +159,37 @@ func RemoveAnchorEncryptionScript(p *Page) {
 
 }
 
+// SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
 func Encrypt(html string) string {
-	//encrypt
-	return "encrypted code"
+	// cipher key
+	key := "thisis32bitlongpassphraseimusing"
+	c := EncryptAES([]byte(key), html)
+	return c
+}
+
+func EncryptAES(key []byte, plaintext string) string {
+	// create cipher
+	c, _ := aes.NewCipher(key)
+
+	// allocate space for ciphered data
+	out := make([]byte, len(plaintext))
+
+	// encrypt
+	c.Encrypt(out, []byte(plaintext))
+	// return hex string
+	return hex.EncodeToString(out)
+}
+
+func DecryptAES(key []byte, ct string) string {
+	ciphertext, _ := hex.DecodeString(ct)
+
+	c, _ := aes.NewCipher(key)
+
+	pt := make([]byte, len(ciphertext))
+	c.Decrypt(pt, ciphertext)
+
+	s := string(pt[:])
+	return s
 }
 
 func EmbedEncryptedPage(html string) (string, error) {
@@ -174,7 +204,7 @@ func EmbedEncryptedPage(html string) (string, error) {
 		return html, err
 	}
 
-	innocentPage.HTML += "<script>var encrypted= " + "\"" + encryptedHTML + "\"" + "</script>"
+	innocentPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
 
 	return innocentPage.HTML, err
 
