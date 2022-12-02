@@ -11,6 +11,7 @@ import (
 	"github.com/gophish/gophish/config"
 	ctx1 "github.com/gophish/gophish/context"
 	"github.com/gophish/gophish/models"
+	"github.com/mitchellh/mapstructure"
 )
 
 type testContext struct {
@@ -90,7 +91,7 @@ func TestEncrypt(t *testing.T) {
 	fmt.Println("DEBUG!!!")
 	payload := &encryptionRequest{
 		Text: "This is a secret",
-		//Key : "thisis32bitlongpassphraseimusing",
+		Key:  "thisis32bitlongpassphraseimusing",
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -113,17 +114,21 @@ func TestEncrypt(t *testing.T) {
 	}
 	resBytes := w.Body.Bytes()
 	println(resBytes)
-	//cryptoRes := cryptoResponse{}
-	var cryptoRes map[string]interface{}
-	if err := json.Unmarshal(resBytes, &cryptoRes); err != nil { // Parse []byte to go struct pointer
+
+	//var cryptoRes map[string]interface{}
+	apiRes := models.Response{}
+	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
 		fmt.Println("Can not unmarshal JSON")
 	}
+	fmt.Println(apiRes.Data)
+	var cryptoRes cryptoResponse
+	mapstructure.Decode(apiRes.Data, &cryptoRes)
 	fmt.Println(cryptoRes)
-	fmt.Println(cryptoRes["data"])
-	//TODO check correct encryption
-	expectedEncryption := "145149d64a1a3c4025e67665001a316700"
-	if cryptoRes["data"] != expectedEncryption {
-		t.Fatalf("unexpected error code received. expected %s got %s", expectedEncryption, cryptoRes["text"])
+
+	//check correct encryption
+	expectedEncryption := "145149d64a1a3c4025e67665001a3167"
+	if cryptoRes.Text != expectedEncryption {
+		t.Fatalf("unexpected error code received. expected %s got %s", expectedEncryption, cryptoRes.Text)
 	}
 
 }

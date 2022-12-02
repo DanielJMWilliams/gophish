@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	log "github.com/gophish/gophish/logger"
-
 	"github.com/gophish/gophish/models"
 )
 
@@ -17,6 +15,7 @@ type cryptoResponse struct {
 
 type encryptionRequest struct {
 	Text string `json:"text"`
+	Key  string `json:"key"`
 }
 
 func (as *Server) Encrypt(w http.ResponseWriter, r *http.Request) {
@@ -32,9 +31,7 @@ func (as *Server) Encrypt(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(w, models.Response{Success: false, Message: "Invalid request"}, http.StatusBadRequest)
 		return
 	}
-	key := "thisis32bitlongpassphraseimusing"
-	encryptedMessage := EncryptAES([]byte(key), p.Text)
-	log.Info(encryptedMessage)
+	encryptedMessage := EncryptAES([]byte(p.Key), p.Text)
 	res := cryptoResponse{Text: encryptedMessage}
 	JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)
 }
