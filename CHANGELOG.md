@@ -1,3 +1,7 @@
+# 02/12/2022 - Encryption/Decryption APIs working
+* /api/encrypt and /api/decrypt APIs now working
+* unit tests for both endpoints
+
 # 01/12/2022 - Almost working encryption API
 * Made /api/encrypt endpoint in crypto.go
 * decrypt endpoint will be needed for the javascript SOC Evasion script to decrypt the encrypted landing pages

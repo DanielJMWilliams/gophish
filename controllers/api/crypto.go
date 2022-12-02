@@ -13,7 +13,7 @@ type cryptoResponse struct {
 	Text string `json:"text"`
 }
 
-type encryptionRequest struct {
+type cryptoRequest struct {
 	Text string `json:"text"`
 	Key  string `json:"key"`
 }
@@ -24,7 +24,7 @@ func (as *Server) Encrypt(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(w, models.Response{Success: false, Message: "Method not allowed"}, http.StatusBadRequest)
 		return
 	}
-	p := encryptionRequest{}
+	p := cryptoRequest{}
 	// Put the request into a page
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
@@ -33,6 +33,24 @@ func (as *Server) Encrypt(w http.ResponseWriter, r *http.Request) {
 	}
 	encryptedMessage := EncryptAES([]byte(p.Key), p.Text)
 	res := cryptoResponse{Text: encryptedMessage}
+	JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)
+}
+
+func (as *Server) Decrypt(w http.ResponseWriter, r *http.Request) {
+	//JSONResponse(w, models.Response{Success: false, Message: "API CALLED SUCCESSFULLY"}, http.StatusBadRequest)
+	if r.Method != "POST" {
+		JSONResponse(w, models.Response{Success: false, Message: "Method not allowed"}, http.StatusBadRequest)
+		return
+	}
+	p := cryptoRequest{}
+	// Put the request into a page
+	err := json.NewDecoder(r.Body).Decode(&p)
+	if err != nil {
+		JSONResponse(w, models.Response{Success: false, Message: "Invalid request"}, http.StatusBadRequest)
+		return
+	}
+	decryptedMessage := DecryptAES([]byte(p.Key), p.Text)
+	res := cryptoResponse{Text: decryptedMessage}
 	JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)
 }
 
