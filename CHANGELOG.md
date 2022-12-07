@@ -1,3 +1,7 @@
+# 07/12/2022 - Encryptiono APIs used by javascript
+* Changed the crypto APIs to run on phishing server
+* example of communication with api in soc_evasion.js
+
 # 02/12/2022 - Encryption/Decryption APIs working
 * /api/encrypt and /api/decrypt APIs now working
 * unit tests for both endpoints
