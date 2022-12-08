@@ -2,8 +2,12 @@ package controllers
 
 import (
 	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gophish/gophish/controllers/api"
@@ -43,7 +47,8 @@ func (ps *PhishingServer) Encrypt(w http.ResponseWriter, r *http.Request) {
 		api.JSONResponse(w, models.Response{Success: false, Message: "Invalid request"}, http.StatusBadRequest)
 		return
 	}
-	encryptedMessage := EncryptAES([]byte(p.Key), p.Text)
+	//encryptedMessage := EncryptAES([]byte(p.Key), p.Text)
+	encryptedMessage := EncryptGCM(p.Text, []byte(p.Key))
 	res := cryptoResponse{Text: encryptedMessage}
 	api.JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)
 }
@@ -62,7 +67,8 @@ func (ps *PhishingServer) Decrypt(w http.ResponseWriter, r *http.Request) {
 		api.JSONResponse(w, models.Response{Success: false, Message: "Invalid request"}, http.StatusBadRequest)
 		return
 	}
-	decryptedMessage := DecryptAES([]byte(p.Key), p.Text)
+	//decryptedMessage := DecryptAES([]byte(p.Key), p.Text)
+	decryptedMessage := DecryptGCM(p.Text, []byte(p.Key))
 	log.Info("DECRYPTED MESSAGE: ")
 	log.Info(decryptedMessage)
 	res := cryptoResponse{Text: decryptedMessage}
@@ -92,4 +98,67 @@ func DecryptAES(key []byte, ct string) string {
 
 	s := string(pt[:])
 	return s
+}
+
+func EncryptGCM(stringToEncrypt string, keyString []byte) (encryptedString string) {
+
+	//Since the key is in string, we need to convert decode it to bytes
+	key := keyString
+	plaintext := []byte(stringToEncrypt)
+
+	//Create a new Cipher Block from the key
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	//Create a new GCM - https://en.wikipedia.org/wiki/Galois/Counter_Mode
+	//https://golang.org/pkg/crypto/cipher/#NewGCM
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	//Create a nonce. Nonce should be from GCM
+	nonce := make([]byte, aesGCM.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		panic(err.Error())
+	}
+
+	//Encrypt the data using aesGCM.Seal
+	//Since we don't want to save the nonce somewhere else in this case, we add it as a prefix to the encrypted data. The first nonce argument in Seal is the prefix.
+	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
+	return fmt.Sprintf("%x", ciphertext)
+}
+
+func DecryptGCM(encryptedString string, keyString []byte) (decryptedString string) {
+
+	key := keyString
+	enc, _ := hex.DecodeString(encryptedString)
+
+	//Create a new Cipher Block from the key
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	//Create a new GCM
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	//Get the nonce size
+	nonceSize := aesGCM.NonceSize()
+
+	//Extract the nonce from the encrypted data
+	nonce, ciphertext := enc[:nonceSize], enc[nonceSize:]
+
+	//Decrypt the data
+	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return fmt.Sprintf("%s", plaintext)
 }

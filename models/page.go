@@ -2,8 +2,11 @@ package models
 
 import (
 	"crypto/aes"
-	"encoding/hex"
+	"crypto/cipher"
+	"crypto/rand"
 	"errors"
+	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -162,34 +165,44 @@ func RemoveAnchorEncryptionScript(p *Page) {
 // SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
 func Encrypt(html string) string {
 	// cipher key
-	key := "thisis32bitlongpassphraseimusing"
-	c := EncryptAES([]byte(key), html)
+	key := []byte("thisis32bitlongpassphraseimusing")
+	c := EncryptGCM(html, key)
+	log.Info("ENCRYPTED: ")
+	log.Info(c)
 	return c
 }
 
-func EncryptAES(key []byte, plaintext string) string {
-	// create cipher
-	c, _ := aes.NewCipher(key)
+func EncryptGCM(stringToEncrypt string, keyString []byte) (encryptedString string) {
+	log.Info("ENCRYPTGCM: ")
+	log.Info(keyString)
+	//Since the key is in string, we need to convert decode it to bytes
+	key := keyString
+	plaintext := []byte(stringToEncrypt)
+	log.Info(key)
+	log.Info(plaintext)
+	//Create a new Cipher Block from the key
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err.Error())
+	}
 
-	// allocate space for ciphered data
-	out := make([]byte, len(plaintext))
+	//Create a new GCM - https://en.wikipedia.org/wiki/Galois/Counter_Mode
+	//https://golang.org/pkg/crypto/cipher/#NewGCM
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err.Error())
+	}
 
-	// encrypt
-	c.Encrypt(out, []byte(plaintext))
-	// return hex string
-	return hex.EncodeToString(out)
-}
+	//Create a nonce. Nonce should be from GCM
+	nonce := make([]byte, aesGCM.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		panic(err.Error())
+	}
 
-func DecryptAES(key []byte, ct string) string {
-	ciphertext, _ := hex.DecodeString(ct)
-
-	c, _ := aes.NewCipher(key)
-
-	pt := make([]byte, len(ciphertext))
-	c.Decrypt(pt, ciphertext)
-
-	s := string(pt[:])
-	return s
+	//Encrypt the data using aesGCM.Seal
+	//Since we don't want to save the nonce somewhere else in this case, we add it as a prefix to the encrypted data. The first nonce argument in Seal is the prefix.
+	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
+	return fmt.Sprintf("%x", ciphertext)
 }
 
 func EmbedEncryptedPage(html string) (string, error) {
