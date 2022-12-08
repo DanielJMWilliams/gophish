@@ -63,6 +63,8 @@ func (ps *PhishingServer) Decrypt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	decryptedMessage := DecryptAES([]byte(p.Key), p.Text)
+	log.Info("DECRYPTED MESSAGE: ")
+	log.Info(decryptedMessage)
 	res := cryptoResponse{Text: decryptedMessage}
 	api.JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)
 }
