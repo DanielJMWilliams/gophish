@@ -1,17 +1,13 @@
 package models
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"errors"
-	"fmt"
-	"io"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/gophish/gophish/logger"
+	"github.com/gophish/gophish/util/crypto"
 )
 
 // Page contains the fields used for a Page model
@@ -166,43 +162,8 @@ func RemoveAnchorEncryptionScript(p *Page) {
 func Encrypt(html string) string {
 	// cipher key
 	key := []byte("thisis32bitlongpassphraseimusing")
-	c := EncryptGCM(html, key)
-	log.Info("ENCRYPTED: ")
-	log.Info(c)
+	c := crypto.EncryptGCM(html, key)
 	return c
-}
-
-func EncryptGCM(stringToEncrypt string, keyString []byte) (encryptedString string) {
-	log.Info("ENCRYPTGCM: ")
-	log.Info(keyString)
-	//Since the key is in string, we need to convert decode it to bytes
-	key := keyString
-	plaintext := []byte(stringToEncrypt)
-	log.Info(key)
-	log.Info(plaintext)
-	//Create a new Cipher Block from the key
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	//Create a new GCM - https://en.wikipedia.org/wiki/Galois/Counter_Mode
-	//https://golang.org/pkg/crypto/cipher/#NewGCM
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	//Create a nonce. Nonce should be from GCM
-	nonce := make([]byte, aesGCM.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		panic(err.Error())
-	}
-
-	//Encrypt the data using aesGCM.Seal
-	//Since we don't want to save the nonce somewhere else in this case, we add it as a prefix to the encrypted data. The first nonce argument in Seal is the prefix.
-	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
-	return fmt.Sprintf("%x", ciphertext)
 }
 
 func EmbedEncryptedPage(html string) (string, error) {
