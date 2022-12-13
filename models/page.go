@@ -20,6 +20,7 @@ type Page struct {
 	CapturePasswords   bool      `json:"capture_passwords" gorm:"column:capture_passwords"`
 	RedirectURL        string    `json:"redirect_url" gorm:"column:redirect_url"`
 	AnchorEncryption   bool      `json:"anchor_encryption" gorm:"column:anchor_encryption"`
+	InnocentPageId     int64     `json:"innocent_page_id" gorm:"column:innocent_page_id"`
 	ModifiedDate       time.Time `json:"modified_date"`
 }
 
@@ -109,13 +110,6 @@ func GetPage(id int64, uid int64) (Page, error) {
 	if err != nil {
 		log.Error(err)
 	}
-
-	//embed html in innocent landing page if anchor encryption turned on
-	if p.AnchorEncryption {
-		p.HTML, err = EmbedEncryptedPage(p.HTML)
-		log.Info(p.HTML)
-	}
-
 	return p, err
 }
 
@@ -131,15 +125,10 @@ func GetPageByName(n string, uid int64) (Page, error) {
 
 // PostPage creates a new page in the database.
 func PostPage(p *Page) error {
-	log.Infof("Anchor encryption %t", p.HTML)
 	err := p.Validate()
 	if err != nil {
 		log.Error(err)
 		return err
-	}
-	// Inject anchor encryption script into HTML if option checked
-	if p.AnchorEncryption {
-		AddAnchorEncryptionScript(p)
 	}
 	// Insert into the DB
 	err = db.Save(p).Error
@@ -188,16 +177,10 @@ func EmbedEncryptedPage(html string) (string, error) {
 // Per the PUT Method RFC, it presumes all data for a page is provided.
 func PutPage(p *Page) error {
 	err := p.Validate()
+	log.Infof("innocent_page_id: %d ", p.InnocentPageId)
 	if err != nil {
 		return err
 	}
-	// Inject anchor encryption script into HTML if option checked
-	if p.AnchorEncryption {
-		AddAnchorEncryptionScript(p)
-	} else {
-		RemoveAnchorEncryptionScript(p)
-	}
-
 	err = db.Where("id=?", p.Id).Save(p).Error
 	if err != nil {
 		log.Error(err)
