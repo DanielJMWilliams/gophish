@@ -123,13 +123,15 @@ function edit(idx) {
         $("#capture_credentials_checkbox").prop("checked", page.capture_credentials)
         $("#capture_passwords_checkbox").prop("checked", page.capture_passwords)
         $("#anchor_encryption_checkbox").prop("checked", page.anchor_encryption)
-        $.each(pages, function (i, p) {
-            $('#innocent_page_dropdown').append($('<option>', { 
-                value: p.id,
-                text : p.name
-            }));
-        });
-        $("#innocent_page_dropdown").val(page.innocent_page_id)
+        if($('#innocent_page_dropdown option').length == 0){
+            $.each(pages, function (i, p) {
+                $('#innocent_page_dropdown').append($('<option>', { 
+                    value: p.id,
+                    text : p.name
+                }));
+            });
+            $("#innocent_page_dropdown").val(page.innocent_page_id)            
+        }
         $("#redirect_url_input").val(page.redirect_url)
         if (page.capture_credentials) {
             $("#capture_passwords").show()
