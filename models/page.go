@@ -108,7 +108,6 @@ func GetPages(uid int64) ([]Page, error) {
 
 // GetPage returns the page, if it exists, specified by the given id and user_id.
 func GetPage(id int64, uid int64) (Page, error) {
-	log.Infof("GETTING PAGE %d", id)
 	p := Page{}
 	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
 	if err != nil {
@@ -126,7 +125,6 @@ func GetPage(id int64, uid int64) (Page, error) {
 
 // GetInnocentPage returns the page, if it exists, specified by the given id and user_id. Will not embed other pages.
 func GetInnocentPage(id int64, uid int64) (Page, error) {
-	log.Infof("GETTING PAGE %d", id)
 	p := Page{}
 	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
 	if err != nil {
@@ -184,7 +182,6 @@ func EmbedEncryptedPage(html string, innocentPageId int64, userId int64) (string
 	//encrypt all html and store in value in new html page
 	// new html page will be innocent looking landing page
 	encryptedHTML := Encrypt(html)
-	log.Info("Innocent Page ID: ", innocentPageId)
 
 	// TODO: update parameters for all users and custom innocent page
 	innocentPage, err := GetInnocentPage(innocentPageId, userId)
@@ -197,6 +194,7 @@ func EmbedEncryptedPage(html string, innocentPageId int64, userId int64) (string
 
 	innocentPage.HTML += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js\"></script>"
 	innocentPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
+	innocentPage.HTML += "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
 
 	return innocentPage.HTML, err
 
@@ -206,7 +204,6 @@ func EmbedEncryptedPage(html string, innocentPageId int64, userId int64) (string
 // Per the PUT Method RFC, it presumes all data for a page is provided.
 func PutPage(p *Page) error {
 	err := p.Validate()
-	log.Infof("innocent_page_id: %d ", p.InnocentPageId)
 	if err != nil {
 		return err
 	}

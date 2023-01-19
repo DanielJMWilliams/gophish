@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"path"
 	"text/template"
+
+	log "github.com/gophish/gophish/logger"
 )
 
 // TemplateContext is an interface that allows both campaigns and email
@@ -23,6 +25,7 @@ type PhishingTemplateContext struct {
 	Tracker     string
 	TrackingURL string
 	RId         string
+	Anchor      string
 	BaseURL     string
 	BaseRecipient
 }
@@ -56,6 +59,7 @@ func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string
 	q := phishURL.Query()
 	q.Set(RecipientParameter, rid)
 	phishURL.RawQuery = q.Encode()
+	log.Info("PhishURL: ", phishURL)
 
 	trackingURL, _ := url.Parse(templateURL)
 	trackingURL.Path = path.Join(trackingURL.Path, "/track")
@@ -65,6 +69,7 @@ func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string
 		BaseRecipient: r,
 		BaseURL:       baseURL.String(),
 		URL:           phishURL.String(),
+		Anchor:        "test",
 		TrackingURL:   trackingURL.String(),
 		Tracker:       "<img alt='' style='display: none' src='" + trackingURL.String() + "'/>",
 		From:          fn,
@@ -113,6 +118,7 @@ func ValidateTemplate(text string) error {
 			Position:  "Test",
 		},
 		RId: "123456",
+		//Anchor: "key",
 	}
 	ptx, err := NewPhishingTemplateContext(vc, td.BaseRecipient, td.RId)
 	if err != nil {
