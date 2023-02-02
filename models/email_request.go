@@ -30,6 +30,7 @@ type EmailRequest struct {
 	UserId      int64        `json:"-"`
 	ErrorChan   chan (error) `json:"-" gorm:"-"`
 	RId         string       `json:"id"`
+	Anchor      string       `json:"anchor"`
 	FromAddress string       `json:"-"`
 	BaseRecipient
 }
@@ -40,6 +41,10 @@ func (s *EmailRequest) getBaseURL() string {
 
 func (s *EmailRequest) getFromAddress() string {
 	return s.FromAddress
+}
+
+func (s *EmailRequest) getAnchor() string {
+	return s.Anchor
 }
 
 // Validate ensures the SendTestEmailRequest structure
@@ -106,7 +111,7 @@ func (s *EmailRequest) Generate(msg *gomail.Message) error {
 	}
 	msg.SetAddressHeader("From", f.Address, f.Name)
 
-	ptx, err := NewPhishingTemplateContext(s, s.BaseRecipient, s.RId)
+	ptx, err := NewPhishingTemplateContext(s, s.BaseRecipient, s.RId, s.Anchor)
 	if err != nil {
 		return err
 	}

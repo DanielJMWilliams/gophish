@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"path"
 	"text/template"
-
-	log "github.com/gophish/gophish/logger"
 )
 
 // TemplateContext is an interface that allows both campaigns and email
@@ -15,6 +13,7 @@ import (
 type TemplateContext interface {
 	getFromAddress() string
 	getBaseURL() string
+	//getAnchor() string
 }
 
 // PhishingTemplateContext is the context that is sent to any template, such
@@ -32,7 +31,7 @@ type PhishingTemplateContext struct {
 
 // NewPhishingTemplateContext returns a populated PhishingTemplateContext,
 // parsing the correct fields from the provided TemplateContext and recipient.
-func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string) (PhishingTemplateContext, error) {
+func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string, anchor string) (PhishingTemplateContext, error) {
 	f, err := mail.ParseAddress(ctx.getFromAddress())
 	if err != nil {
 		return PhishingTemplateContext{}, err
@@ -58,9 +57,8 @@ func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string
 	phishURL, _ := url.Parse(templateURL)
 	q := phishURL.Query()
 	q.Set(RecipientParameter, rid)
-	phishURL.Fragment = "anchor"
+	phishURL.Fragment = anchor
 	phishURL.RawQuery = q.Encode()
-	log.Info("PhishURL: ", phishURL)
 
 	trackingURL, _ := url.Parse(templateURL)
 	trackingURL.Path = path.Join(trackingURL.Path, "/track")
@@ -70,7 +68,7 @@ func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string
 		BaseRecipient: r,
 		BaseURL:       baseURL.String(),
 		URL:           phishURL.String(),
-		Anchor:        "test",
+		Anchor:        phishURL.Fragment,
 		TrackingURL:   trackingURL.String(),
 		Tracker:       "<img alt='' style='display: none' src='" + trackingURL.String() + "'/>",
 		From:          fn,
@@ -121,7 +119,7 @@ func ValidateTemplate(text string) error {
 		RId: "123456",
 		//Anchor: "key",
 	}
-	ptx, err := NewPhishingTemplateContext(vc, td.BaseRecipient, td.RId)
+	ptx, err := NewPhishingTemplateContext(vc, td.BaseRecipient, td.RId, "None")
 	if err != nil {
 		return err
 	}

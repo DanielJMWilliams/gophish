@@ -159,11 +159,13 @@ func (c *Campaign) UpdateStatus(s string) error {
 func AddEvent(e *Event, campaignID int64) error {
 	e.CampaignId = campaignID
 	e.Time = time.Now().UTC()
-
+	log.Info("Adding campaign event to database")
 	whs, err := GetActiveWebhooks()
 	if err == nil {
+		log.Info("No error: ", len(whs))
 		whEndPoints := []webhook.EndPoint{}
 		for _, wh := range whs {
+			log.Info("URL: ", wh.URL)
 			whEndPoints = append(whEndPoints, webhook.EndPoint{
 				URL:    wh.URL,
 				Secret: wh.Secret,

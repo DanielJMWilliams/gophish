@@ -39,9 +39,10 @@ func (s *ModelsSuite) TestNewTemplateContext(c *check.C) {
 		TrackingURL:   fmt.Sprintf("%s/track?rid=%s", ctx.URL, r.RId),
 		From:          "From Address",
 		RId:           r.RId,
+		Anchor:        "11111111112222222222333333333312",
 	}
 	expected.Tracker = "<img alt='' style='display: none' src='" + expected.TrackingURL + "'/>"
-	got, err := NewPhishingTemplateContext(ctx, r.BaseRecipient, r.RId)
+	got, err := NewPhishingTemplateContext(ctx, r.BaseRecipient, r.RId, "11111111112222222222333333333312")
 	c.Assert(err, check.Equals, nil)
 	c.Assert(got, check.DeepEquals, expected)
 }
