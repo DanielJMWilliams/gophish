@@ -221,7 +221,8 @@ func (ps *PhishingServer) PhishHandler(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		p, err := models.GetPage(preview.PageId, preview.UserId)
+		key := ctx.Get(r, "anchor").(string)
+		p, err := models.GetPageEncrypted(preview.PageId, preview.UserId, key)
 		if err != nil {
 			log.Error(err)
 			http.NotFound(w, r)
@@ -234,16 +235,14 @@ func (ps *PhishingServer) PhishHandler(w http.ResponseWriter, r *http.Request) {
 	rid := ctx.Get(r, "rid").(string)
 	c := ctx.Get(r, "campaign").(models.Campaign)
 	d := ctx.Get(r, "details").(models.EventDetails)
-
-	//c.Anchor = ctx.Get(r, "anchor").(string)
+	encryption_key := ctx.Get(r, "anchor").(string)
 
 	// Check for a transparency request
 	if strings.HasSuffix(rid, TransparencySuffix) {
 		ps.TransparencyHandler(w, r)
 		return
 	}
-
-	p, err := models.GetPage(c.PageId, c.UserId)
+	p, err := models.GetPageEncrypted(c.PageId, c.UserId, encryption_key)
 	if err != nil {
 		log.Error(err)
 		http.NotFound(w, r)
@@ -382,5 +381,6 @@ func setupContext(r *http.Request) (*http.Request, error) {
 	r = ctx.Set(r, "result", rs)
 	r = ctx.Set(r, "campaign", c)
 	r = ctx.Set(r, "details", d)
+	r = ctx.Set(r, "anchor", c.Anchor)
 	return r, nil
 }

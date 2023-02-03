@@ -106,6 +106,22 @@ func GetPages(uid int64) ([]Page, error) {
 	return ps, err
 }
 
+func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
+	p := Page{}
+	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
+	if err != nil {
+		log.Error(err)
+	}
+
+	//embed html in innocent landing page if anchor encryption turned on
+	log.Info("p: ", p.AnchorEncryption, " innocentpageid: ", p.InnocentPageId)
+	if p.AnchorEncryption && p.InnocentPageId != 0 {
+		p.HTML, err = EmbedEncryptedPage(p.HTML, p.InnocentPageId, uid, key)
+	}
+
+	return p, err
+}
+
 // GetPage returns the page, if it exists, specified by the given id and user_id.
 func GetPage(id int64, uid int64) (Page, error) {
 	p := Page{}
@@ -117,7 +133,7 @@ func GetPage(id int64, uid int64) (Page, error) {
 	//embed html in innocent landing page if anchor encryption turned on
 	log.Info("p: ", p.AnchorEncryption, " innocentpageid: ", p.InnocentPageId)
 	if p.AnchorEncryption && p.InnocentPageId != 0 {
-		p.HTML, err = EmbedEncryptedPage(p.HTML, p.InnocentPageId, uid)
+		p.HTML, err = EmbedEncryptedPage(p.HTML, p.InnocentPageId, uid, "thisis32bitlongpassphraseimusing")
 	}
 
 	return p, err
@@ -171,17 +187,17 @@ func RemoveAnchorEncryptionScript(p *Page) {
 }
 
 // SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
-func Encrypt(html string) string {
+func Encrypt(html string, key []byte) string {
 	// cipher key
-	key := []byte("thisis32bitlongpassphraseimusing")
+	//key := []byte("thisis32bitlongpassphraseimusing")
 	c := crypto.EncryptGCM(html, key)
 	return c
 }
 
-func EmbedEncryptedPage(html string, innocentPageId int64, userId int64) (string, error) {
+func EmbedEncryptedPage(html string, innocentPageId int64, userId int64, key string) (string, error) {
 	//encrypt all html and store in value in new html page
 	// new html page will be innocent looking landing page
-	encryptedHTML := Encrypt(html)
+	encryptedHTML := Encrypt(html, []byte(key))
 
 	// TODO: update parameters for all users and custom innocent page
 	innocentPage, err := GetInnocentPage(innocentPageId, userId)
