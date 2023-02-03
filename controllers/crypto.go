@@ -39,7 +39,6 @@ func (ps *PhishingServer) Encrypt(w http.ResponseWriter, r *http.Request) {
 		api.JSONResponse(w, models.Response{Success: false, Message: "Invalid request"}, http.StatusBadRequest)
 		return
 	}
-	//encryptedMessage := EncryptAES([]byte(p.Key), p.Text)
 	encryptedMessage := crypto.EncryptGCM(p.Text, []byte(p.Key))
 	res := cryptoResponse{Text: encryptedMessage}
 	api.JSONResponse(w, models.Response{Success: true, Message: "Text encrypted successfully", Data: res}, http.StatusOK)

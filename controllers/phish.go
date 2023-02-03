@@ -221,8 +221,7 @@ func (ps *PhishingServer) PhishHandler(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		key := ctx.Get(r, "anchor").(string)
-		p, err := models.GetPageEncrypted(preview.PageId, preview.UserId, key)
+		p, err := models.GetPage(preview.PageId, preview.UserId)
 		if err != nil {
 			log.Error(err)
 			http.NotFound(w, r)

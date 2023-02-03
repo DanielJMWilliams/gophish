@@ -131,12 +131,12 @@ func createTestData(t *testing.T) {
 }
 
 // crypto
-func TestEncrypt(t *testing.T) {
-	payload := &cryptoRequest{
+func TestEncryptAndDecrypt(t *testing.T) {
+	payloadEncrypt := &cryptoRequest{
 		Text: "This is a secret",
 		Key:  "thisis32bitlongpassphraseimusing",
 	}
-	body, err := json.Marshal(payload)
+	body, err := json.Marshal(payloadEncrypt)
 	if err != nil {
 		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
 	}
@@ -156,56 +156,50 @@ func TestEncrypt(t *testing.T) {
 	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
 		fmt.Println("Can not unmarshal JSON")
 	}
-	var cryptoRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &cryptoRes)
+	var encryptionRes cryptoResponse
+	mapstructure.Decode(apiRes.Data, &encryptionRes)
 	//check correct encryption
-	expectedEncryption := "145149d64a1a3c4025e67665001a3167"
-	if cryptoRes.Text != expectedEncryption {
-		t.Fatalf("unexpected error code received. expected %s got %s", expectedEncryption, cryptoRes.Text)
-	}
+	encryptedText := encryptionRes.Text
 
-}
-
-func TestDecrypt(t *testing.T) {
-	payload := &cryptoRequest{
-		Text: "145149d64a1a3c4025e67665001a3167",
-		Key:  "thisis32bitlongpassphraseimusing",
+	//decryption
+	payloadDecrypt := &cryptoRequest{
+		Text: encryptedText,
+		Key:  payloadEncrypt.Key,
 	}
-	body, err := json.Marshal(payload)
+	body, err = json.Marshal(payloadDecrypt)
 	if err != nil {
 		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
 	}
-	testCtx := setupTest(t)
 
-	r := httptest.NewRequest(http.MethodPost, "/api/decrypt", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodPost, "/api/decrypt", bytes.NewBuffer(body))
+	w = httptest.NewRecorder()
 
 	testCtx.phishingServer.Decrypt(w, r)
-	expected := http.StatusOK
+	expected = http.StatusOK
 	if w.Code != expected {
 		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
 	}
-	resBytes := w.Body.Bytes()
+	resBytes = w.Body.Bytes()
 
-	apiRes := models.Response{}
+	apiRes = models.Response{}
 	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
 		fmt.Println("Can not unmarshal JSON")
 	}
-	var cryptoRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &cryptoRes)
+	var decryptionRes cryptoResponse
+	mapstructure.Decode(apiRes.Data, &decryptionRes)
 	//check correct decryption
-	expectedDecryption := "This is a secret"
-	if cryptoRes.Text != expectedDecryption {
-		t.Fatalf("unexpected error code received. expected %s got %s", expectedDecryption, cryptoRes.Text)
+	if decryptionRes.Text != payloadEncrypt.Text {
+		t.Fatalf("unexpected error code received. expected %s got %s", payloadEncrypt.Text, decryptionRes.Text)
 	}
+
 }
 
-func TestEncrypt2(t *testing.T) {
-	payload := &cryptoRequest{
+func TestEncryptAndDecrypt2(t *testing.T) {
+	payloadEncrypt := &cryptoRequest{
 		Text: "<html><head></head><body>nothing much here</body></html><script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>",
-		Key:  "thisis32bitlongpassphraseimusing",
+		Key:  "noZsmWPQZzGVJzkjtiTvVzkPQhI9MwMM",
 	}
-	body, err := json.Marshal(payload)
+	body, err := json.Marshal(payloadEncrypt)
 	if err != nil {
 		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
 	}
@@ -225,46 +219,40 @@ func TestEncrypt2(t *testing.T) {
 	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
 		fmt.Println("Can not unmarshal JSON")
 	}
-	var cryptoRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &cryptoRes)
+	var encryptionRes cryptoResponse
+	mapstructure.Decode(apiRes.Data, &encryptionRes)
 	//check correct encryption
-	expectedEncryption := "0677bdea92a20afc365b39b0c008c29c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-	if cryptoRes.Text != expectedEncryption {
-		t.Fatalf("unexpected error code received. expected %s got %s", expectedEncryption, cryptoRes.Text)
-	}
+	encryptedText := encryptionRes.Text
 
-}
-
-func TestDecrypt2(t *testing.T) {
-	payload := &cryptoRequest{
-		Text: "0677bdea92a20afc365b39b0c008c29c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-		Key:  "thisis32bitlongpassphraseimusing",
+	//decryption
+	payloadDecrypt := &cryptoRequest{
+		Text: encryptedText,
+		Key:  payloadEncrypt.Key,
 	}
-	body, err := json.Marshal(payload)
+	body, err = json.Marshal(payloadDecrypt)
 	if err != nil {
 		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
 	}
-	testCtx := setupTest(t)
 
-	r := httptest.NewRequest(http.MethodPost, "/api/decrypt", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodPost, "/api/decrypt", bytes.NewBuffer(body))
+	w = httptest.NewRecorder()
 
 	testCtx.phishingServer.Decrypt(w, r)
-	expected := http.StatusOK
+	expected = http.StatusOK
 	if w.Code != expected {
 		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
 	}
-	resBytes := w.Body.Bytes()
+	resBytes = w.Body.Bytes()
 
-	apiRes := models.Response{}
+	apiRes = models.Response{}
 	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
 		fmt.Println("Can not unmarshal JSON")
 	}
-	var cryptoRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &cryptoRes)
+	var decryptionRes cryptoResponse
+	mapstructure.Decode(apiRes.Data, &decryptionRes)
 	//check correct decryption
-	expectedDecryption := "<html><head></head><body>nothing much here</body></html><script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
-	if cryptoRes.Text != expectedDecryption {
-		t.Fatalf("unexpected error code received. expected %s got %s", expectedDecryption, cryptoRes.Text)
+	if decryptionRes.Text != payloadEncrypt.Text {
+		t.Fatalf("unexpected error code received. expected %s got %s", payloadEncrypt.Text, decryptionRes.Text)
 	}
+
 }
