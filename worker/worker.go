@@ -115,7 +115,6 @@ func (w *DefaultWorker) Start() {
 
 // LaunchCampaign starts a campaign
 func (w *DefaultWorker) LaunchCampaign(c models.Campaign) {
-	log.Info("LAUNCHING CAMPAIGN")
 	ms, err := models.GetMailLogsByCampaign(c.Id)
 	if err != nil {
 		log.Error(err)
