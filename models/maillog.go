@@ -33,10 +33,11 @@ var embeddedFileExtensions = []string{".jpg", ".jpeg", ".png", ".gif"}
 // MailLog is a struct that holds information about an email that is to be
 // sent out.
 type MailLog struct {
-	Id          int64     `json:"-"`
-	UserId      int64     `json:"-"`
-	CampaignId  int64     `json:"campaign_id"`
-	RId         string    `json:"id"`
+	Id         int64  `json:"-"`
+	UserId     int64  `json:"-"`
+	CampaignId int64  `json:"campaign_id"`
+	RId        string `json:"id"`
+	//Anchor
 	SendDate    time.Time `json:"send_date"`
 	SendAttempt int       `json:"send_attempt"`
 	Processing  bool      `json:"-"`
@@ -191,7 +192,7 @@ func (m *MailLog) Generate(msg *gomail.Message) error {
 	}
 	msg.SetAddressHeader("From", f.Address, f.Name)
 
-	ptx, err := NewPhishingTemplateContext(c, r.BaseRecipient, r.RId)
+	ptx, err := NewPhishingTemplateContext(c, r.BaseRecipient, r.RId, c.Anchor)
 	if err != nil {
 		return err
 	}

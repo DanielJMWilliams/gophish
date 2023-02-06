@@ -43,6 +43,7 @@ function launch() {
                         name: $("#template").select2("data")[0].text
                     },
                     url: $("#url").val(),
+                    anchor: $("#anchor").val(),
                     page: {
                         name: $("#page").select2("data")[0].text
                     },
@@ -120,6 +121,7 @@ function dismiss() {
     $("#template").val("").change();
     $("#page").val("").change();
     $("#url").val("");
+    $("#anchor").val(""),
     $("#profile").val("").change();
     $("#users").val("").change();
     $("#modal").modal('hide');
@@ -284,11 +286,27 @@ function copy(idx) {
                 $("#profile").trigger("change.select2")
             }
             $("#url").val(campaign.url)
+            $("#anchor").val(campaign.anchor)
         })
         .error(function (data) {
             $("#modal\\.flashes").empty().append("<div style=\"text-align:center\" class=\"alert alert-danger\">\
             <i class=\"fa fa-exclamation-circle\"></i> " + data.responseJSON.message + "</div>")
         })
+}
+
+function generateKey(){
+    $("#anchor").val(makeid(32))
+}
+
+// REFERENCE: https://stackoverflow.com/a/1349426
+function makeid(length) {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
 }
 
 $(document).ready(function () {
@@ -308,6 +326,7 @@ $(document).ready(function () {
         "useCurrent": false,
         "format": "MMMM Do YYYY, h:mm a"
     })
+    $("#generate_key_btn").click(() => generateKey());
     // Setup multiple modals
     // Code based on http://miles-by-motorcycle.com/static/bootstrap-modal/index.html
     $('.modal').on('hidden.bs.modal', function (event) {

@@ -31,6 +31,7 @@ type Campaign struct {
 	SMTPId        int64     `json:"-"`
 	SMTP          SMTP      `json:"smtp"`
 	URL           string    `json:"url"`
+	Anchor        string    `json:"anchor"`
 }
 
 // CampaignResults is a struct representing the results from a campaign
@@ -158,7 +159,6 @@ func (c *Campaign) UpdateStatus(s string) error {
 func AddEvent(e *Event, campaignID int64) error {
 	e.CampaignId = campaignID
 	e.Time = time.Now().UTC()
-
 	whs, err := GetActiveWebhooks()
 	if err == nil {
 		whEndPoints := []webhook.EndPoint{}
@@ -609,7 +609,7 @@ func PostCampaign(c *Campaign, uid int64) error {
 	return tx.Commit().Error
 }
 
-//DeleteCampaign deletes the specified campaign
+// DeleteCampaign deletes the specified campaign
 func DeleteCampaign(id int64) error {
 	log.WithFields(logrus.Fields{
 		"campaign_id": id,

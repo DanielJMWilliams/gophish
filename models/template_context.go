@@ -23,13 +23,14 @@ type PhishingTemplateContext struct {
 	Tracker     string
 	TrackingURL string
 	RId         string
+	Anchor      string
 	BaseURL     string
 	BaseRecipient
 }
 
 // NewPhishingTemplateContext returns a populated PhishingTemplateContext,
 // parsing the correct fields from the provided TemplateContext and recipient.
-func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string) (PhishingTemplateContext, error) {
+func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string, anchor string) (PhishingTemplateContext, error) {
 	f, err := mail.ParseAddress(ctx.getFromAddress())
 	if err != nil {
 		return PhishingTemplateContext{}, err
@@ -55,6 +56,10 @@ func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string
 	phishURL, _ := url.Parse(templateURL)
 	q := phishURL.Query()
 	q.Set(RecipientParameter, rid)
+	if anchor != "" {
+		phishURL.Fragment = anchor
+	}
+
 	phishURL.RawQuery = q.Encode()
 
 	trackingURL, _ := url.Parse(templateURL)
@@ -65,6 +70,7 @@ func NewPhishingTemplateContext(ctx TemplateContext, r BaseRecipient, rid string
 		BaseRecipient: r,
 		BaseURL:       baseURL.String(),
 		URL:           phishURL.String(),
+		Anchor:        phishURL.Fragment,
 		TrackingURL:   trackingURL.String(),
 		Tracker:       "<img alt='' style='display: none' src='" + trackingURL.String() + "'/>",
 		From:          fn,
@@ -113,8 +119,9 @@ func ValidateTemplate(text string) error {
 			Position:  "Test",
 		},
 		RId: "123456",
+		//Anchor: "key",
 	}
-	ptx, err := NewPhishingTemplateContext(vc, td.BaseRecipient, td.RId)
+	ptx, err := NewPhishingTemplateContext(vc, td.BaseRecipient, td.RId, "None")
 	if err != nil {
 		return err
 	}

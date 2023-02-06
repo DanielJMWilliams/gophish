@@ -20,6 +20,7 @@ type Page struct {
 	CapturePasswords   bool      `json:"capture_passwords" gorm:"column:capture_passwords"`
 	RedirectURL        string    `json:"redirect_url" gorm:"column:redirect_url"`
 	AnchorEncryption   bool      `json:"anchor_encryption" gorm:"column:anchor_encryption"`
+	InnocentPageId     int64     `json:"innocent_page_id" gorm:"column:innocent_page_id"`
 	ModifiedDate       time.Time `json:"modified_date"`
 }
 
@@ -81,6 +82,10 @@ func (p *Page) Validate() error {
 	if p.CapturePasswords && !p.CaptureCredentials {
 		p.CaptureCredentials = true
 	}
+	//If anchor encryption turned off, no innocent page
+	if !p.AnchorEncryption {
+		p.InnocentPageId = 0
+	}
 	if err := ValidateTemplate(p.HTML); err != nil {
 		return err
 	}
@@ -101,9 +106,7 @@ func GetPages(uid int64) ([]Page, error) {
 	return ps, err
 }
 
-// GetPage returns the page, if it exists, specified by the given id and user_id.
-func GetPage(id int64, uid int64) (Page, error) {
-	log.Info("GETTING PAGE %d", id)
+func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
 	p := Page{}
 	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
 	if err != nil {
@@ -111,10 +114,40 @@ func GetPage(id int64, uid int64) (Page, error) {
 	}
 
 	//embed html in innocent landing page if anchor encryption turned on
-	if p.AnchorEncryption {
-		p.HTML, err = EmbedEncryptedPage(p.HTML)
-		log.Info(p.HTML)
+	log.Info("p: ", p.AnchorEncryption, " innocentpageid: ", p.InnocentPageId)
+	if p.AnchorEncryption && p.InnocentPageId != 0 {
+		p.HTML, err = EmbedEncryptedPage(p.HTML, p.InnocentPageId, uid, key)
 	}
+
+	return p, err
+}
+
+// GetPage returns the page, if it exists, specified by the given id and user_id.
+func GetPage(id int64, uid int64) (Page, error) {
+	p := Page{}
+	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
+	if err != nil {
+		log.Error(err)
+	}
+
+	//embed html in innocent landing page if anchor encryption turned on
+	log.Info("p: ", p.AnchorEncryption, " innocentpageid: ", p.InnocentPageId)
+	if p.AnchorEncryption && p.InnocentPageId != 0 {
+		p.HTML, err = EmbedEncryptedPage(p.HTML, p.InnocentPageId, uid, "thisis32bitlongpassphraseimusing")
+	}
+
+	return p, err
+}
+
+// GetInnocentPage returns the page, if it exists, specified by the given id and user_id. Will not embed other pages.
+func GetInnocentPage(id int64, uid int64) (Page, error) {
+	p := Page{}
+	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
+	if err != nil {
+		log.Error(err)
+	}
+
+	//no embedding so not to create infinite loops
 
 	return p, err
 }
@@ -131,15 +164,10 @@ func GetPageByName(n string, uid int64) (Page, error) {
 
 // PostPage creates a new page in the database.
 func PostPage(p *Page) error {
-	log.Infof("Anchor encryption %t", p.HTML)
 	err := p.Validate()
 	if err != nil {
 		log.Error(err)
 		return err
-	}
-	// Inject anchor encryption script into HTML if option checked
-	if p.AnchorEncryption {
-		AddAnchorEncryptionScript(p)
 	}
 	// Insert into the DB
 	err = db.Save(p).Error
@@ -159,26 +187,30 @@ func RemoveAnchorEncryptionScript(p *Page) {
 }
 
 // SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
-func Encrypt(html string) string {
+func Encrypt(html string, key []byte) string {
 	// cipher key
-	key := []byte("thisis32bitlongpassphraseimusing")
+	//key := []byte("thisis32bitlongpassphraseimusing")
 	c := crypto.EncryptGCM(html, key)
 	return c
 }
 
-func EmbedEncryptedPage(html string) (string, error) {
+func EmbedEncryptedPage(html string, innocentPageId int64, userId int64, key string) (string, error) {
 	//encrypt all html and store in value in new html page
 	// new html page will be innocent looking landing page
-	encryptedHTML := Encrypt(html)
+	encryptedHTML := Encrypt(html, []byte(key))
 
 	// TODO: update parameters for all users and custom innocent page
-	innocentPage, err := GetPageByName("InnocentPage", 1)
+	innocentPage, err := GetInnocentPage(innocentPageId, userId)
+	// Must set anchor encryption of innocent page to false so it doesn't add another layer of anchor encryption
+	innocentPage.AnchorEncryption = false
 
 	if err != nil {
 		return html, err
 	}
 
+	innocentPage.HTML += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js\"></script>"
 	innocentPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
+	innocentPage.HTML += "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
 
 	return innocentPage.HTML, err
 
@@ -191,13 +223,6 @@ func PutPage(p *Page) error {
 	if err != nil {
 		return err
 	}
-	// Inject anchor encryption script into HTML if option checked
-	if p.AnchorEncryption {
-		AddAnchorEncryptionScript(p)
-	} else {
-		RemoveAnchorEncryptionScript(p)
-	}
-
 	err = db.Where("id=?", p.Id).Save(p).Error
 	if err != nil {
 		log.Error(err)

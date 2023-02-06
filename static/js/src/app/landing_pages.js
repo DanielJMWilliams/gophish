@@ -15,6 +15,7 @@ function save(idx) {
     page.capture_credentials = $("#capture_credentials_checkbox").prop("checked")
     page.capture_passwords = $("#capture_passwords_checkbox").prop("checked")
     page.anchor_encryption = $("#anchor_encryption_checkbox").prop("checked")
+    page.innocent_page_id = parseInt($("#innocent_page_dropdown").val())
     page.redirect_url = $("#redirect_url_input").val()
     if (idx != -1) {
         page.id = pages[idx].id
@@ -47,6 +48,7 @@ function dismiss() {
     $("#modal").find("input[type='checkbox']").prop("checked", false)
     $("#capture_passwords").hide()
     $("#redirect_url").hide()
+    $("#innocent_page_selector").hide()
     $("#modal").modal('hide')
 }
 
@@ -121,10 +123,22 @@ function edit(idx) {
         $("#capture_credentials_checkbox").prop("checked", page.capture_credentials)
         $("#capture_passwords_checkbox").prop("checked", page.capture_passwords)
         $("#anchor_encryption_checkbox").prop("checked", page.anchor_encryption)
+        if($('#innocent_page_dropdown option').length == 0){
+            $.each(pages, function (i, p) {
+                $('#innocent_page_dropdown').append($('<option>', { 
+                    value: p.id,
+                    text : p.name
+                }));
+            });
+            $("#innocent_page_dropdown").val(page.innocent_page_id)            
+        }
         $("#redirect_url_input").val(page.redirect_url)
         if (page.capture_credentials) {
             $("#capture_passwords").show()
             $("#redirect_url").show()
+        }
+        if (page.anchor_encryption) {
+            $("#innocent_page_selector").show()
         }
     } else {
         $("#modalLabel").text("New Landing Page")
@@ -239,6 +253,9 @@ $(document).ready(function () {
     $("#capture_credentials_checkbox").change(function () {
         $("#capture_passwords").toggle()
         $("#redirect_url").toggle()
+    })
+    $("#anchor_encryption_checkbox").change(function () {
+        $("#innocent_page_selector").toggle()
     })
     CKEDITOR.on('dialogDefinition', function (ev) {
         // Take the dialog name and its definition from the event data.
