@@ -3,7 +3,7 @@
 
 TODO:
 * Refactor code so EncryptGCM function not repeated
-* Automatically create innocent page and make it nice
+* Automatically create decoy page and make it nice
 
 # 08/12/2022 - soc_evasion.js working
 * javascript decrypts the value, and sets the page to the decrypted HTML
