@@ -24,22 +24,18 @@ func (as *Server) Campaigns(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(w, cs, http.StatusOK)
 	//POST: Create a new campaign and return it as JSON
 	case r.Method == "POST":
-		log.Info("POST")
 		c := models.Campaign{}
 		// Put the request into a campaign
 		err := json.NewDecoder(r.Body).Decode(&c)
 		if err != nil {
-			log.Info("INVALID 1")
 			JSONResponse(w, models.Response{Success: false, Message: "Invalid JSON structure"}, http.StatusBadRequest)
 			return
 		}
 		err = models.PostCampaign(&c, ctx.Get(r, "user_id").(int64))
 		if err != nil {
-			log.Info("BAD REQUEST")
 			JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusBadRequest)
 			return
 		}
-		log.Info("SEEMINGLY ALL GOOD")
 		// If the campaign is scheduled to launch immediately, send it to the worker.
 		// Otherwise, the worker will pick it up at the scheduled time
 		if c.Status == models.CampaignInProgress {
