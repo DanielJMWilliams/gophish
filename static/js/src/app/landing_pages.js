@@ -115,6 +115,17 @@ function edit(idx) {
     $("#html_editor").ckeditor()
     setupAutocomplete(CKEDITOR.instances["html_editor"])
     var page = {}
+    // setup decoy page dropdown
+    if($('#decoy_page_dropdown option').length == 0){
+        $.each(pages, function (i, p) {
+            $('#decoy_page_dropdown').append($('<option>', { 
+                value: p.id,
+                text : p.name
+            }));
+        });
+        $("#decoy_page_dropdown").val(page.decoy_page_id)            
+    }
+    $("#decoy_page_selector").hide()
     if (idx != -1) {
         $("#modalLabel").text("Edit Landing Page")
         page = pages[idx]
@@ -123,15 +134,6 @@ function edit(idx) {
         $("#capture_credentials_checkbox").prop("checked", page.capture_credentials)
         $("#capture_passwords_checkbox").prop("checked", page.capture_passwords)
         $("#anchor_encryption_checkbox").prop("checked", page.anchor_encryption)
-        if($('#decoy_page_dropdown option').length == 0){
-            $.each(pages, function (i, p) {
-                $('#decoy_page_dropdown').append($('<option>', { 
-                    value: p.id,
-                    text : p.name
-                }));
-            });
-            $("#decoy_page_dropdown").val(page.decoy_page_id)            
-        }
         $("#redirect_url_input").val(page.redirect_url)
         if (page.capture_credentials) {
             $("#capture_passwords").show()
