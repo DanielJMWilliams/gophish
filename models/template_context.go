@@ -13,7 +13,6 @@ import (
 type TemplateContext interface {
 	getFromAddress() string
 	getBaseURL() string
-	//getAnchor() string
 }
 
 // PhishingTemplateContext is the context that is sent to any template, such
