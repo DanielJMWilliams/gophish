@@ -109,6 +109,7 @@ function importSite() {
 }
 
 function edit(idx) {
+    setupOptions();
     $("#modalSubmit").unbind('click').click(function () {
         save(idx)
     })
@@ -148,6 +149,7 @@ function edit(idx) {
 }
 
 function copy(idx) {
+    setupOptions();
     $("#modalSubmit").unbind('click').click(function () {
         save(-1)
     })
@@ -277,3 +279,29 @@ $(document).ready(function () {
 
     load()
 })
+
+
+function setupOptions() {
+    api.pages.get()
+        .success(function (pages) {
+            if (pages.length == 0) {
+                modalError("No pages found!")
+                return false
+            } else {
+                var page_s2 = $.map(pages, function (obj) {
+                    obj.text = obj.name
+                    return obj
+                });
+                var page_select = $("#decoy_page_dropdown.form-control")
+                page_select.select2({
+                    placeholder: "Select a Decoy Page",
+                    data: page_s2,
+                });
+                if (pages.length === 1) {
+                    page_select.val(page_s2[0].id)
+                    page_select.trigger('change.select2')
+                }
+            }
+        });
+
+}
