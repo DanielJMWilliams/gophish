@@ -16,13 +16,17 @@ document.addEventListener("DOMContentLoaded", function(){
                 //checks if it decrypted successfully - all html pages will start with "<"
                 if(decryptedMessage.substring(0, 1)=="<"){
                     //sets the html to the decrypted message
-                    document.write(decryptedMessage); 
-                    $('html').show()            
+                    document.body.parentNode.setHTML(decryptedMessage)     
                 }
+                $('html').show()
             },
             fail: function () {
-                console.log("Encountered an error")
+                console.log("Encountered a failure")
                 $('html').show()  
+            },
+            error: function(){
+                console.log("Encountered an error")
+                $('html').show() 
             }
         });
     }
