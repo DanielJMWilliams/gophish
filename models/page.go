@@ -177,10 +177,10 @@ func PostPage(p *Page) error {
 }
 
 func AddAnchorEncryptionScript(p *Page) {
-	p.HTML = p.HTML + "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
+	p.HTML = p.HTML + "<script src=\"http://127.0.0.1:80/static/soc_evasion.js\"></script>"
 }
 func RemoveAnchorEncryptionScript(p *Page) {
-	scriptString := "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
+	scriptString := "<script src=\"http://127.0.0.1:80/static/soc_evasion.js\"></script>"
 	p.HTML = strings.Replace(p.HTML, scriptString, "", 1)
 
 }
@@ -209,7 +209,7 @@ func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string
 
 	decoyPage.HTML += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js\"></script>"
 	decoyPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
-	decoyPage.HTML += "<script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>"
+	AddAnchorEncryptionScript(&decoyPage)
 
 	return decoyPage.HTML, err
 
