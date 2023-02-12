@@ -176,15 +176,6 @@ func PostPage(p *Page) error {
 	return err
 }
 
-func AddAnchorEncryptionScript(p *Page) {
-	p.HTML = p.HTML + "<script src=\"http://127.0.0.1:80/static/soc_evasion.js\"></script>"
-}
-func RemoveAnchorEncryptionScript(p *Page) {
-	scriptString := "<script src=\"http://127.0.0.1:80/static/soc_evasion.js\"></script>"
-	p.HTML = strings.Replace(p.HTML, scriptString, "", 1)
-
-}
-
 // SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
 func Encrypt(html string, key []byte) string {
 	// cipher key
@@ -207,9 +198,11 @@ func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string
 		return html, err
 	}
 
+	//hide decoy page html by default and only show if soc_evasion script doesnt decrypt malicious page properly.
+	decoyPage.HTML = strings.Replace(decoyPage.HTML, "<html ", "<html style=\"display:none;\" ", 1)
 	decoyPage.HTML += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js\"></script>"
 	decoyPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
-	AddAnchorEncryptionScript(&decoyPage)
+	decoyPage.HTML += "<script src=\"http://127.0.0.1:80/static/soc_evasion.js\"></script>"
 
 	return decoyPage.HTML, err
 

@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", function(){
     //get anchor and set it to be key
     var anchor = window.location.hash.substring(1);
     //send decryption request to server
-    // "thisis32bitlongpassphraseimusing"
     if(anchor!="" && encrypted!=""){
         data = {Text: encrypted, Key: anchor}
         $.ajax({
@@ -14,20 +13,21 @@ document.addEventListener("DOMContentLoaded", function(){
             success: function (data) {
                 //console.log(data.data);
                 decryptedMessage = data.data["text"]
-                //checks if it dcrypted successfully
-                //WARNING: This may open up the encryption for analysis
-                // could check if first char is < which opens up less info for analysis
+                //checks if it decrypted successfully - all html pages will start with "<"
                 if(decryptedMessage.substring(0, 1)=="<"){
                     //sets the html to the decrypted message
-                    document.write(decryptedMessage);            
+                    document.write(decryptedMessage); 
+                    $('html').show()            
                 }
-        
-
             },
             fail: function () {
                 console.log("Encountered an error")
+                $('html').show()  
             }
         });
     }
-
+    else{
+        $('html').show()  
+    }
+    
 });
