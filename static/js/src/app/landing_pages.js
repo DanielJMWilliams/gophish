@@ -116,16 +116,6 @@ function edit(idx) {
     $("#html_editor").ckeditor()
     setupAutocomplete(CKEDITOR.instances["html_editor"])
     var page = {}
-    // setup decoy page dropdown
-    if($('#decoy_page_dropdown option').length == 0){
-        $.each(pages, function (i, p) {
-            $('#decoy_page_dropdown').append($('<option>', { 
-                value: p.id,
-                text : p.name
-            }));
-        });
-        $("#decoy_page_dropdown").val(page.decoy_page_id)            
-    }
     $("#decoy_page_selector").hide()
     if (idx != -1) {
         $("#modalLabel").text("Edit Landing Page")
@@ -142,6 +132,16 @@ function edit(idx) {
         }
         if (page.anchor_encryption) {
             $("#decoy_page_selector").show()
+        }
+            // setup decoy page dropdown
+        if (!page.id) {
+            $("#decoy_page_dropdown").val("").change();
+            $("#decoy_page_dropdown").select2({
+                placeholder: page.name
+            });
+        } else {
+            $("#decoy_page_dropdown").val(page.decoy_page_id);
+            $("#decoy_page_dropdown").trigger("change.select2")
         }
     } else {
         $("#modalLabel").text("New Landing Page")
