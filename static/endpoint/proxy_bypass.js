@@ -27,40 +27,39 @@ function hexToBytes(hex) {
     }
     return bytes;
 }
-  
-  async function decrypt(ciphertext, key) {
-    ciphertext = hexToBytes(ciphertext);
-    var enc = new TextEncoder();
-    var encodedKey =  enc.encode(key);
+//https://voracious.dev/blog/a-practical-guide-to-the-web-cryptography-api
+async function decrypt(ciphertext, key) {
+  ciphertext = hexToBytes(ciphertext);
+  var enc = new TextEncoder();
+  var encodedKey =  enc.encode(key);
     
-    const cipher = await window.crypto.subtle.importKey(
-      'raw',
-      encodedKey,
-      'AES-GCM',
-      true,
-      ['decrypt']
-    );
+  const cipher = await window.crypto.subtle.importKey(
+    'raw',
+    encodedKey,
+    'AES-GCM',
+    true,
+    ['decrypt']
+  );
   
-    // Extract the nonce from the beginning of the ciphertext
-    const nonce = ciphertext.slice(0, 12);
+  // Extract the nonce from the beginning of the ciphertext
+  const nonce = ciphertext.slice(0, 12);
   
-    // Extract the encrypted message from the ciphertext
-    const encrypted = ciphertext.slice(12);
+  // Extract the encrypted message from the ciphertext
+  const encrypted = ciphertext.slice(12);
   
-    // Decrypt the message using window.crypto.subtle.decrypt
-    const decrypted = await window.crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: nonce,
-        tagLength: 128,
-      },
-      cipher,
-      encrypted
-    );
+  // Decrypt the message using window.crypto.subtle.decrypt
+  const decrypted = await window.crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv: nonce,
+      tagLength: 128,
+    },
+    cipher,
+    encrypted
+  );
   
-    // Decode the decrypted message to a string
-    const decoder = new TextDecoder();
-    const plaintext = decoder.decode(decrypted);
-    return plaintext;
-  }
-  
+  // Decode the decrypted message to a string
+  const decoder = new TextDecoder();
+  const plaintext = decoder.decode(decrypted);
+  return plaintext;
+}
