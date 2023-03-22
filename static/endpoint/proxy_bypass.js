@@ -18,23 +18,22 @@ document.addEventListener("DOMContentLoaded", function(){
     
 });
 
-
-const hexToBytes = (hex) => {
+// Convert a hex string to a byte array
+//https://stackoverflow.com/a/34356351
+function hexToBytes(hex) {
     const bytes = new Uint8Array(hex.length / 2);
     for (let i = 0; i < bytes.length; i++) {
       bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
     }
     return bytes;
-  };
+}
   
   async function decrypt(ciphertext, key) {
-    // Convert the ciphertext from a hex string to a Uint8Array
     ciphertext = hexToBytes(ciphertext);
     var enc = new TextEncoder();
     var encodedKey =  enc.encode(key);
     
-    // Create a new Cipher Block from the key
-    const block = await window.crypto.subtle.importKey(
+    const cipher = await window.crypto.subtle.importKey(
       'raw',
       encodedKey,
       'AES-GCM',
@@ -55,7 +54,7 @@ const hexToBytes = (hex) => {
         iv: nonce,
         tagLength: 128,
       },
-      block,
+      cipher,
       encrypted
     );
   
