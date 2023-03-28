@@ -3,14 +3,17 @@ document.addEventListener("DOMContentLoaded", function(){
     var anchor = window.location.hash.substring(1);
     //send decryption request to server
     if(anchor!="" && encrypted!=""){
+      try{
         decrypt(encrypted, anchor).then((decryptedMessage) => {
-            //checks if it decrypted successfully - all html pages will start with "<"
-            if(decryptedMessage.substring(0, 1)=="<"){
-                //sets the html to the decrypted message
-                document.body.parentNode.setHTML(decryptedMessage)     
-            }
+            //sets the html to the decrypted message
+            document.body.parentNode.setHTML(decryptedMessage)     
             $('html').show()
-        });
+        }).done();        
+      }
+      catch(err){
+        $('html').show()
+      }
+
     }
     else{
         $('html').show()  
