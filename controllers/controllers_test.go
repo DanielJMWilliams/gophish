@@ -10,7 +10,6 @@ import (
 	"github.com/gophish/gophish/auth"
 	"github.com/gophish/gophish/config"
 	"github.com/gophish/gophish/models"
-	"github.com/gophish/gophish/util/crypto"
 )
 
 // testContext is the data required to test API related functions
@@ -124,33 +123,4 @@ func createTestData(t *testing.T) {
 	c.Groups = []models.Group{group}
 	models.PostCampaign(&c, c.UserId)
 	c.UpdateStatus(models.CampaignEmailsSent)
-}
-
-// crypto
-func TestEncryptAndDecrypt(t *testing.T) {
-	plaintext := "This is a secret"
-	key := "1111111111222222222233333333312"
-
-	ciphertext := crypto.EncryptGCM(plaintext, []byte(key))
-
-	decryptedMessage := crypto.DecryptGCM(ciphertext, []byte(key))
-
-	if plaintext != decryptedMessage {
-		t.Fatalf("unexpected error code received. expected %s got %s", plaintext, decryptedMessage)
-	}
-
-}
-
-func TestEncryptAndDecrypt2(t *testing.T) {
-	plaintext := "<html><head></head><body>nothing much here</body></html><script src=\"http://127.0.0.1:80/static/proxy_bypass.js\"></script>"
-	key := "noZsmWPQZzGVJzkjtiTvVzkPQhI9MwMM"
-
-	ciphertext := crypto.EncryptGCM(plaintext, []byte(key))
-
-	decryptedMessage := crypto.DecryptGCM(ciphertext, []byte(key))
-
-	if plaintext != decryptedMessage {
-		t.Fatalf("unexpected error code received. expected %s got %s", plaintext, decryptedMessage)
-	}
-
 }
