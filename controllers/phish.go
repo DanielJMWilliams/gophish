@@ -239,7 +239,7 @@ func (ps *PhishingServer) PhishHandler(w http.ResponseWriter, r *http.Request) {
 		ps.TransparencyHandler(w, r)
 		return
 	}
-	p, err := models.GetPageEncrypted(c.PageId, c.UserId, encryptionKey)
+	p, err := models.GetPageEncrypted(c.PageId, c.UserId, encryptionKey, ps.config.ListenURL)
 	if err != nil {
 		log.Error(err)
 		http.NotFound(w, r)
