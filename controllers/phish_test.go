@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"testing"
 
+	"strings"
+
 	"github.com/gophish/gophish/config"
 	log "github.com/gophish/gophish/logger"
 	"github.com/gophish/gophish/models"
@@ -125,6 +127,16 @@ func clickLink(t *testing.T, ctx *testContext, rid string, expectedHTML string) 
 	}
 }
 
+func stripOutEncrypted(html string) string {
+	startPos := strings.Index(html, `var encrypted = "`) + len(`var encrypted = "`)
+	endPos := strings.Index(html[startPos:], `"`) + startPos
+	log.Info("startPos: ", startPos)
+	log.Info("endPos: ", endPos)
+	expectedHTML := html[:startPos] + html[endPos:]
+	log.Info("expectedHTML: ", expectedHTML)
+	return expectedHTML
+}
+
 func clickLinkWithAnchor(t *testing.T, ctx *testContext, rid string, expectedHTML string, anchor string) {
 	requestURL := fmt.Sprintf("%s/?%s=%s#%s", ctx.phishServer.URL, models.RecipientParameter, rid, anchor)
 	resp, err := http.Get(requestURL)
@@ -136,8 +148,9 @@ func clickLinkWithAnchor(t *testing.T, ctx *testContext, rid string, expectedHTM
 	if err != nil {
 		t.Fatalf("error reading payload from / endpoint response: %v", err)
 	}
-	if !bytes.Equal(got, []byte(expectedHTML)) {
-		t.Fatalf("invalid response received from / endpoint. expected %s got %s", got, expectedHTML)
+	actual := stripOutEncrypted(string(got))
+	if actual != expectedHTML {
+		t.Fatalf("invalid response received from / endpoint. expected %s got %s", actual, expectedHTML)
 	}
 }
 
@@ -246,7 +259,11 @@ func TestProxyBypassWithAnchor(t *testing.T) {
 
 	openEmail(t, ctx, result.RId)
 	anchor := "11111111112222222222333333333312"
-	decoyPage, err := models.GetPageEncrypted(campaign.Page.Id, 1, anchor, "127.0.0.1:54136")
+	decoyPage, err := models.GetPageEncrypted(campaign.Page.Id, 1, anchor, "")
+	//phish url behaving strangely
+	//strip out encrypted value cause that changes every time due to nonce used in AES GCM
+	// Find the start and end position of the encrypted value
+	expectedHTML := stripOutEncrypted(decoyPage.HTML)
 	//http://127.0.0.1:54136
 	//ctx.phishServer.URL
 	if err != nil {
@@ -254,7 +271,7 @@ func TestProxyBypassWithAnchor(t *testing.T) {
 	}
 	log.Info("HUH? ", decoyPage.HTML)
 	//clickLink(t, ctx, result.RId, decoyPage.HTML)
-	clickLinkWithAnchor(t, ctx, result.RId, decoyPage.HTML, anchor)
+	clickLinkWithAnchor(t, ctx, result.RId, expectedHTML, anchor)
 
 	campaign = getFirstCampaign(t)
 	result = campaign.Results[0]
