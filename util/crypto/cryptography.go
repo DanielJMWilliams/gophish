@@ -9,6 +9,7 @@ import (
 	"io"
 )
 
+// SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
 // reference: https://gist.github.com/Fallenstedt/71b3d1f292d70d7bf917ca6ee7743efa
 func EncryptGCM(stringToEncrypt string, keyString []byte) (encryptedString string) {
 

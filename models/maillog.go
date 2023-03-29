@@ -33,11 +33,10 @@ var embeddedFileExtensions = []string{".jpg", ".jpeg", ".png", ".gif"}
 // MailLog is a struct that holds information about an email that is to be
 // sent out.
 type MailLog struct {
-	Id         int64  `json:"-"`
-	UserId     int64  `json:"-"`
-	CampaignId int64  `json:"campaign_id"`
-	RId        string `json:"id"`
-	//Anchor
+	Id          int64     `json:"-"`
+	UserId      int64     `json:"-"`
+	CampaignId  int64     `json:"campaign_id"`
+	RId         string    `json:"id"`
 	SendDate    time.Time `json:"send_date"`
 	SendAttempt int       `json:"send_attempt"`
 	Processing  bool      `json:"-"`

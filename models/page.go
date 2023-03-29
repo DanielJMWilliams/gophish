@@ -176,18 +176,10 @@ func PostPage(p *Page) error {
 	return err
 }
 
-// SOURCE: https://golangdocs.com/aes-encryption-decryption-in-golang
-func Encrypt(html string, key []byte) string {
-	// cipher key
-	//key := []byte("thisis32bitlongpassphraseimusing")
-	c := crypto.EncryptGCM(html, key)
-	return c
-}
-
 func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string) (string, error) {
 	//encrypt all html and store in value in new html page
 	// new html page will be decoy looking landing page
-	encryptedHTML := Encrypt(html, []byte(key))
+	encryptedHTML := crypto.EncryptGCM(html, []byte(key))
 
 	// TODO: update parameters for all users and custom decoy page
 	decoyPage, err := GetDecoyPage(decoyPageId, userId)

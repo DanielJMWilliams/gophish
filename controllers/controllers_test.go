@@ -1,10 +1,7 @@
 package controllers
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -13,17 +10,16 @@ import (
 	"github.com/gophish/gophish/auth"
 	"github.com/gophish/gophish/config"
 	"github.com/gophish/gophish/models"
-	"github.com/mitchellh/mapstructure"
+	"github.com/gophish/gophish/util/crypto"
 )
 
 // testContext is the data required to test API related functions
 type testContext struct {
-	apiKey         string
-	config         *config.Config
-	adminServer    *httptest.Server
-	phishServer    *httptest.Server
-	phishingServer *PhishingServer
-	origPath       string
+	apiKey      string
+	config      *config.Config
+	adminServer *httptest.Server
+	phishServer *httptest.Server
+	origPath    string
 }
 
 func setupTest(t *testing.T) *testContext {
@@ -132,127 +128,29 @@ func createTestData(t *testing.T) {
 
 // crypto
 func TestEncryptAndDecrypt(t *testing.T) {
-	payloadEncrypt := &cryptoRequest{
-		Text: "This is a secret",
-		Key:  "thisis32bitlongpassphraseimusing",
-	}
-	body, err := json.Marshal(payloadEncrypt)
-	if err != nil {
-		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
-	}
-	testCtx := setupTest(t)
+	plaintext := "This is a secret"
+	key := "1111111111222222222233333333312"
 
-	r := httptest.NewRequest(http.MethodPost, "/api/encrypt", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
+	ciphertext := crypto.EncryptGCM(plaintext, []byte(key))
 
-	testCtx.phishingServer.Encrypt(w, r)
-	expected := http.StatusOK
-	if w.Code != expected {
-		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
-	}
-	resBytes := w.Body.Bytes()
+	decryptedMessage := crypto.DecryptGCM(ciphertext, []byte(key))
 
-	apiRes := models.Response{}
-	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
-		fmt.Println("Can not unmarshal JSON")
-	}
-	var encryptionRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &encryptionRes)
-	//check correct encryption
-	encryptedText := encryptionRes.Text
-
-	//decryption
-	payloadDecrypt := &cryptoRequest{
-		Text: encryptedText,
-		Key:  payloadEncrypt.Key,
-	}
-	body, err = json.Marshal(payloadDecrypt)
-	if err != nil {
-		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
-	}
-
-	r = httptest.NewRequest(http.MethodPost, "/api/decrypt", bytes.NewBuffer(body))
-	w = httptest.NewRecorder()
-
-	testCtx.phishingServer.Decrypt(w, r)
-	expected = http.StatusOK
-	if w.Code != expected {
-		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
-	}
-	resBytes = w.Body.Bytes()
-
-	apiRes = models.Response{}
-	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
-		fmt.Println("Can not unmarshal JSON")
-	}
-	var decryptionRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &decryptionRes)
-	//check correct decryption
-	if decryptionRes.Text != payloadEncrypt.Text {
-		t.Fatalf("unexpected error code received. expected %s got %s", payloadEncrypt.Text, decryptionRes.Text)
+	if plaintext != decryptedMessage {
+		t.Fatalf("unexpected error code received. expected %s got %s", plaintext, decryptedMessage)
 	}
 
 }
 
 func TestEncryptAndDecrypt2(t *testing.T) {
-	payloadEncrypt := &cryptoRequest{
-		Text: "<html><head></head><body>nothing much here</body></html><script src=\"https://127.0.0.1:3333/js/dist/app/soc_evasion.js\"></script>",
-		Key:  "noZsmWPQZzGVJzkjtiTvVzkPQhI9MwMM",
-	}
-	body, err := json.Marshal(payloadEncrypt)
-	if err != nil {
-		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
-	}
-	testCtx := setupTest(t)
+	plaintext := "<html><head></head><body>nothing much here</body></html><script src=\"http://127.0.0.1:80/static/proxy_bypass.js\"></script>"
+	key := "noZsmWPQZzGVJzkjtiTvVzkPQhI9MwMM"
 
-	r := httptest.NewRequest(http.MethodPost, "/api/encrypt", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
+	ciphertext := crypto.EncryptGCM(plaintext, []byte(key))
 
-	testCtx.phishingServer.Encrypt(w, r)
-	expected := http.StatusOK
-	if w.Code != expected {
-		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
-	}
-	resBytes := w.Body.Bytes()
+	decryptedMessage := crypto.DecryptGCM(ciphertext, []byte(key))
 
-	apiRes := models.Response{}
-	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
-		fmt.Println("Can not unmarshal JSON")
-	}
-	var encryptionRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &encryptionRes)
-	//check correct encryption
-	encryptedText := encryptionRes.Text
-
-	//decryption
-	payloadDecrypt := &cryptoRequest{
-		Text: encryptedText,
-		Key:  payloadEncrypt.Key,
-	}
-	body, err = json.Marshal(payloadDecrypt)
-	if err != nil {
-		t.Fatalf("error marshaling encryptionRequest payload: %v", err)
-	}
-
-	r = httptest.NewRequest(http.MethodPost, "/api/decrypt", bytes.NewBuffer(body))
-	w = httptest.NewRecorder()
-
-	testCtx.phishingServer.Decrypt(w, r)
-	expected = http.StatusOK
-	if w.Code != expected {
-		t.Fatalf("unexpected error code received. expected %d got %d", expected, w.Code)
-	}
-	resBytes = w.Body.Bytes()
-
-	apiRes = models.Response{}
-	if err := json.Unmarshal(resBytes, &apiRes); err != nil { // Parse []byte to go struct pointer
-		fmt.Println("Can not unmarshal JSON")
-	}
-	var decryptionRes cryptoResponse
-	mapstructure.Decode(apiRes.Data, &decryptionRes)
-	//check correct decryption
-	if decryptionRes.Text != payloadEncrypt.Text {
-		t.Fatalf("unexpected error code received. expected %s got %s", payloadEncrypt.Text, decryptionRes.Text)
+	if plaintext != decryptedMessage {
+		t.Fatalf("unexpected error code received. expected %s got %s", plaintext, decryptedMessage)
 	}
 
 }
