@@ -82,7 +82,7 @@ func (p *Page) Validate() error {
 	if p.CapturePasswords && !p.CaptureCredentials {
 		p.CaptureCredentials = true
 	}
-	//If anchor encryption turned off, no decoy page
+	//If proxy bypass disabled, no decoy page
 	if !p.ProxyBypassEnabled {
 		p.DecoyPageId = 0
 	}
@@ -149,7 +149,7 @@ func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
 		log.Error(err)
 	}
 
-	//embed html in decoy landing page if anchor encryption turned on
+	//embed html in decoy landing page if proxy bypass enabled
 	if p.ProxyBypassEnabled && p.DecoyPageId != 0 {
 		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, key)
 	}
@@ -164,7 +164,7 @@ func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string
 
 	// TODO: update parameters for all users and custom decoy page
 	decoyPage, err := GetPage(decoyPageId, userId)
-	// Must set anchor encryption of decoy page to false so it doesn't add another layer of anchor encryption
+	// Must disable proxy bypass of decoy page so it doesn't embed pages in pages in pages
 	decoyPage.ProxyBypassEnabled = false
 
 	if err != nil {
