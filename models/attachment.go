@@ -37,7 +37,6 @@ func (a Attachment) Validate() error {
 			Position:  "Test",
 		},
 		RId: "123456",
-		//Anchor: "11111111112222222222333333333312",
 	}
 	ptx, err := NewPhishingTemplateContext(vc, td.BaseRecipient, td.RId, "11111111112222222222333333333312")
 	if err != nil {

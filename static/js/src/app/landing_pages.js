@@ -14,7 +14,7 @@ function save(idx) {
     page.html = editor.getData()
     page.capture_credentials = $("#capture_credentials_checkbox").prop("checked")
     page.capture_passwords = $("#capture_passwords_checkbox").prop("checked")
-    page.anchor_encryption = $("#anchor_encryption_checkbox").prop("checked")
+    page.proxy_bypass_enabled = $("#proxy_bypass_enabled_checkbox").prop("checked")
     page.decoy_page_id = parseInt($("#decoy_page_dropdown").val())
     page.redirect_url = $("#redirect_url_input").val()
     if (idx != -1) {
@@ -124,13 +124,13 @@ function edit(idx) {
         $("#html_editor").val(page.html)
         $("#capture_credentials_checkbox").prop("checked", page.capture_credentials)
         $("#capture_passwords_checkbox").prop("checked", page.capture_passwords)
-        $("#anchor_encryption_checkbox").prop("checked", page.anchor_encryption)
+        $("#proxy_bypass_enabled_checkbox").prop("checked", page.proxy_bypass_enabled)
         $("#redirect_url_input").val(page.redirect_url)
         if (page.capture_credentials) {
             $("#capture_passwords").show()
             $("#redirect_url").show()
         }
-        if (page.anchor_encryption) {
+        if (page.proxy_bypass_enabled) {
             $("#decoy_page_selector").show()
         }
             // setup decoy page dropdown
@@ -258,7 +258,7 @@ $(document).ready(function () {
         $("#capture_passwords").toggle()
         $("#redirect_url").toggle()
     })
-    $("#anchor_encryption_checkbox").change(function () {
+    $("#proxy_bypass_enabled_checkbox").change(function () {
         $("#decoy_page_selector").toggle()
     })
     CKEDITOR.on('dialogDefinition', function (ev) {

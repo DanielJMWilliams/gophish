@@ -232,14 +232,14 @@ func (ps *PhishingServer) PhishHandler(w http.ResponseWriter, r *http.Request) {
 	rid := ctx.Get(r, "rid").(string)
 	c := ctx.Get(r, "campaign").(models.Campaign)
 	d := ctx.Get(r, "details").(models.EventDetails)
-	encryption_key := ctx.Get(r, "anchor").(string)
+	encryptionKey := ctx.Get(r, "anchor").(string)
 
 	// Check for a transparency request
 	if strings.HasSuffix(rid, TransparencySuffix) {
 		ps.TransparencyHandler(w, r)
 		return
 	}
-	p, err := models.GetPageEncrypted(c.PageId, c.UserId, encryption_key)
+	p, err := models.GetPageEncrypted(c.PageId, c.UserId, encryptionKey)
 	if err != nil {
 		log.Error(err)
 		http.NotFound(w, r)

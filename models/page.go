@@ -19,7 +19,7 @@ type Page struct {
 	CaptureCredentials bool      `json:"capture_credentials" gorm:"column:capture_credentials"`
 	CapturePasswords   bool      `json:"capture_passwords" gorm:"column:capture_passwords"`
 	RedirectURL        string    `json:"redirect_url" gorm:"column:redirect_url"`
-	AnchorEncryption   bool      `json:"anchor_encryption" gorm:"column:anchor_encryption"`
+	ProxyBypassEnabled bool      `json:"proxy_bypass_enabled" gorm:"column:proxy_bypass_enabled"`
 	DecoyPageId        int64     `json:"decoy_page_id" gorm:"column:decoy_page_id"`
 	ModifiedDate       time.Time `json:"modified_date"`
 }
@@ -83,7 +83,7 @@ func (p *Page) Validate() error {
 		p.CaptureCredentials = true
 	}
 	//If anchor encryption turned off, no decoy page
-	if !p.AnchorEncryption {
+	if !p.ProxyBypassEnabled {
 		p.DecoyPageId = 0
 	}
 	if err := ValidateTemplate(p.HTML); err != nil {
@@ -104,51 +104,6 @@ func GetPages(uid int64) ([]Page, error) {
 		return ps, err
 	}
 	return ps, err
-}
-
-func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
-	p := Page{}
-	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
-	if err != nil {
-		log.Error(err)
-	}
-
-	//embed html in decoy landing page if anchor encryption turned on
-	if p.AnchorEncryption && p.DecoyPageId != 0 {
-		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, key)
-	}
-
-	return p, err
-}
-
-// GetPage returns the page, if it exists, specified by the given id and user_id.
-func GetPage(id int64, uid int64) (Page, error) {
-	p := Page{}
-	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
-	if err != nil {
-		log.Error(err)
-	}
-
-	//embed html in decoy landing page if anchor encryption turned on
-	log.Info("p: ", p.AnchorEncryption, " decoypageid: ", p.DecoyPageId)
-	if p.AnchorEncryption && p.DecoyPageId != 0 {
-		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, "thisis32bitlongpassphraseimusing")
-	}
-
-	return p, err
-}
-
-// GetDecoyPage returns the page, if it exists, specified by the given id and user_id. Will not embed other pages.
-func GetDecoyPage(id int64, uid int64) (Page, error) {
-	p := Page{}
-	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
-	if err != nil {
-		log.Error(err)
-	}
-
-	//no embedding so not to create infinite loops
-
-	return p, err
 }
 
 // GetPageByName returns the page, if it exists, specified by the given name and user_id.
@@ -176,15 +131,41 @@ func PostPage(p *Page) error {
 	return err
 }
 
+// GetPage returns the page, if it exists, specified by the given id and user_id.
+func GetPage(id int64, uid int64) (Page, error) {
+	p := Page{}
+	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
+	if err != nil {
+		log.Error(err)
+	}
+
+	return p, err
+}
+
+func GetPageEncrypted(id int64, uid int64, key string) (Page, error) {
+	p := Page{}
+	err := db.Where("user_id=? and id=?", uid, id).Find(&p).Error
+	if err != nil {
+		log.Error(err)
+	}
+
+	//embed html in decoy landing page if anchor encryption turned on
+	if p.ProxyBypassEnabled && p.DecoyPageId != 0 {
+		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, key)
+	}
+
+	return p, err
+}
+
 func EmbedEncryptedPage(html string, decoyPageId int64, userId int64, key string) (string, error) {
 	//encrypt all html and store in value in new html page
 	// new html page will be decoy looking landing page
 	encryptedHTML := crypto.EncryptGCM(html, []byte(key))
 
 	// TODO: update parameters for all users and custom decoy page
-	decoyPage, err := GetDecoyPage(decoyPageId, userId)
+	decoyPage, err := GetPage(decoyPageId, userId)
 	// Must set anchor encryption of decoy page to false so it doesn't add another layer of anchor encryption
-	decoyPage.AnchorEncryption = false
+	decoyPage.ProxyBypassEnabled = false
 
 	if err != nil {
 		return html, err
