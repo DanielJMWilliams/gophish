@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gophish/gophish/config"
+	log "github.com/gophish/gophish/logger"
 	"github.com/gophish/gophish/models"
 )
 
@@ -20,6 +21,16 @@ func getFirstCampaign(t *testing.T) models.Campaign {
 		t.Fatalf("error getting first campaign from database: %v", err)
 	}
 	return campaigns[0]
+}
+
+func getCampaignByID(t *testing.T, i int) models.Campaign {
+	campaigns, err := models.GetCampaigns(1)
+	if err != nil {
+		t.Fatalf("error getting first campaign from database: %v", err)
+	}
+	log.Info("Index: ", i)
+	log.Info("campaigns.length: ", len(campaigns))
+	return campaigns[i]
 }
 
 func getFirstEmailRequest(t *testing.T) models.EmailRequest {
@@ -99,7 +110,24 @@ func reportEmail404(t *testing.T, ctx *testContext, rid string) {
 }
 
 func clickLink(t *testing.T, ctx *testContext, rid string, expectedHTML string) {
-	resp, err := http.Get(fmt.Sprintf("%s/?%s=%s", ctx.phishServer.URL, models.RecipientParameter, rid))
+	requestURL := fmt.Sprintf("%s/?%s=%s", ctx.phishServer.URL, models.RecipientParameter, rid)
+	resp, err := http.Get(requestURL)
+	if err != nil {
+		t.Fatalf("error requesting / endpoint: %v", err)
+	}
+	defer resp.Body.Close()
+	got, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("error reading payload from / endpoint response: %v", err)
+	}
+	if !bytes.Equal(got, []byte(expectedHTML)) {
+		t.Fatalf("invalid response received from / endpoint. expected %s got %s", got, expectedHTML)
+	}
+}
+
+func clickLinkWithAnchor(t *testing.T, ctx *testContext, rid string, expectedHTML string, anchor string) {
+	requestURL := fmt.Sprintf("%s/?%s=%s#%s", ctx.phishServer.URL, models.RecipientParameter, rid, anchor)
+	resp, err := http.Get(requestURL)
 	if err != nil {
 		t.Fatalf("error requesting / endpoint: %v", err)
 	}
@@ -197,6 +225,45 @@ func TestReportedPhishingEmail(t *testing.T) {
 	}
 	if lastEvent.Message != models.EventReported {
 		t.Fatalf("unexpected event status received. expected %s got %s", lastEvent.Message, models.EventReported)
+	}
+	if result.ModifiedDate != lastEvent.Time {
+		t.Fatalf("unexpected result modified date received. expected %s got %s", lastEvent.Time, result.ModifiedDate)
+	}
+}
+
+func TestProxyBypassWithoutAnchor(t *testing.T) {
+
+}
+
+func TestProxyBypassWithAnchor(t *testing.T) {
+	ctx := setupTest(t)
+	defer tearDown(t, ctx)
+	campaign := getCampaignByID(t, 1)
+	result := campaign.Results[0]
+	if result.Status != models.StatusSending {
+		t.Fatalf("unexpected result status received. expected %s got %s", models.StatusSending, result.Status)
+	}
+
+	openEmail(t, ctx, result.RId)
+	anchor := "11111111112222222222333333333312"
+	decoyPage, err := models.GetPageEncrypted(campaign.Page.Id, 1, anchor, "127.0.0.1:54136")
+	//http://127.0.0.1:54136
+	//ctx.phishServer.URL
+	if err != nil {
+		log.Error(err)
+	}
+	log.Info("HUH? ", decoyPage.HTML)
+	//clickLink(t, ctx, result.RId, decoyPage.HTML)
+	clickLinkWithAnchor(t, ctx, result.RId, decoyPage.HTML, anchor)
+
+	campaign = getFirstCampaign(t)
+	result = campaign.Results[0]
+	lastEvent := campaign.Events[len(campaign.Events)-1]
+	if result.Status != models.EventClicked {
+		t.Fatalf("unexpected result status received. expected %s got %s", models.EventClicked, result.Status)
+	}
+	if lastEvent.Message != models.EventClicked {
+		t.Fatalf("unexpected event status received. expected %s got %s", lastEvent.Message, models.EventClicked)
 	}
 	if result.ModifiedDate != lastEvent.Time {
 		t.Fatalf("unexpected result modified date received. expected %s got %s", lastEvent.Time, result.ModifiedDate)

@@ -151,9 +151,9 @@ func GetPageEncrypted(id int64, uid int64, key string, phishServerURL string) (P
 
 	//embed html in decoy landing page if proxy bypass enabled
 	if p.ProxyBypassEnabled && p.DecoyPageId != 0 {
+		log.Info("url: ", phishServerURL)
 		p.HTML, err = EmbedEncryptedPage(p.HTML, p.DecoyPageId, uid, key, phishServerURL)
 	}
-
 	return p, err
 }
 
