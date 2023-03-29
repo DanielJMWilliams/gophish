@@ -128,12 +128,10 @@ func clickLink(t *testing.T, ctx *testContext, rid string, expectedHTML string) 
 }
 
 func stripOutEncrypted(html string) string {
+	// Find the start and end position of the encrypted value
 	startPos := strings.Index(html, `var encrypted = "`) + len(`var encrypted = "`)
 	endPos := strings.Index(html[startPos:], `"`) + startPos
-	log.Info("startPos: ", startPos)
-	log.Info("endPos: ", endPos)
 	expectedHTML := html[:startPos] + html[endPos:]
-	log.Info("expectedHTML: ", expectedHTML)
 	return expectedHTML
 }
 
@@ -262,7 +260,6 @@ func TestProxyBypassWithAnchor(t *testing.T) {
 	decoyPage, err := models.GetPageEncrypted(campaign.Page.Id, 1, anchor, "")
 	//phish url behaving strangely
 	//strip out encrypted value cause that changes every time due to nonce used in AES GCM
-	// Find the start and end position of the encrypted value
 	expectedHTML := stripOutEncrypted(decoyPage.HTML)
 	//http://127.0.0.1:54136
 	//ctx.phishServer.URL
