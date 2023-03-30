@@ -106,6 +106,20 @@ func createTestData(t *testing.T) {
 	p.UserId = 1
 	models.PostPage(&p)
 
+	//add decoy page
+	p2 := models.Page{Name: "Decoy Page"}
+	p2.HTML = "<html>This is a decoy page</html>"
+	p2.UserId = 1
+	models.PostPage(&p2)
+
+	//add phishing page with proxy bypass enabled
+	p3 := models.Page{Name: "Phishing Page"}
+	p3.HTML = "<html>This is a phishing page</html>"
+	p3.ProxyBypassEnabled = true
+	p3.DecoyPageId = p2.Id
+	p3.UserId = 1
+	models.PostPage(&p3)
+
 	// Add a sending profile
 	smtp := models.SMTP{Name: "Test Page"}
 	smtp.UserId = 1
@@ -123,4 +137,16 @@ func createTestData(t *testing.T) {
 	c.Groups = []models.Group{group}
 	models.PostCampaign(&c, c.UserId)
 	c.UpdateStatus(models.CampaignEmailsSent)
+
+	// Setup and "launch" our campaign using proxy bypass
+	// Set the status such that no emails are attempted
+	c2 := models.Campaign{Name: "Proxy Bypass Test campaign"}
+	c2.UserId = 1
+	c2.Template = template
+	c2.Page = p3
+	c2.SMTP = smtp
+	c2.Anchor = "11111111112222222222333333333312"
+	c2.Groups = []models.Group{group}
+	models.PostCampaign(&c2, c2.UserId)
+	c2.UpdateStatus(models.CampaignEmailsSent)
 }
