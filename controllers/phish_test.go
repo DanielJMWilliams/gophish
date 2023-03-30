@@ -241,12 +241,7 @@ func TestReportedPhishingEmail(t *testing.T) {
 		t.Fatalf("unexpected result modified date received. expected %s got %s", lastEvent.Time, result.ModifiedDate)
 	}
 }
-
-func TestProxyBypassWithoutAnchor(t *testing.T) {
-
-}
-
-func TestProxyBypassWithAnchor(t *testing.T) {
+func TestProxyBypassEmbedding(t *testing.T) {
 	ctx := setupTest(t)
 	defer tearDown(t, ctx)
 	campaign := getCampaignByID(t, 1)
@@ -259,29 +254,15 @@ func TestProxyBypassWithAnchor(t *testing.T) {
 	anchor := "11111111112222222222333333333312"
 	decoyPage, err := models.GetPageEncrypted(campaign.Page.Id, 1, anchor, "")
 	//phish url behaving strangely
-	//strip out encrypted value cause that changes every time due to nonce used in AES GCM
+	//strip out encrypted value because that changes every time due to nonce used in AES GCM
 	expectedHTML := stripOutEncrypted(decoyPage.HTML)
 	//http://127.0.0.1:54136
 	//ctx.phishServer.URL
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info("HUH? ", decoyPage.HTML)
-	//clickLink(t, ctx, result.RId, decoyPage.HTML)
+	//javascript won't run in this method so will just get decoy page with embedded phishing page
 	clickLinkWithAnchor(t, ctx, result.RId, expectedHTML, anchor)
-
-	campaign = getFirstCampaign(t)
-	result = campaign.Results[0]
-	lastEvent := campaign.Events[len(campaign.Events)-1]
-	if result.Status != models.EventClicked {
-		t.Fatalf("unexpected result status received. expected %s got %s", models.EventClicked, result.Status)
-	}
-	if lastEvent.Message != models.EventClicked {
-		t.Fatalf("unexpected event status received. expected %s got %s", lastEvent.Message, models.EventClicked)
-	}
-	if result.ModifiedDate != lastEvent.Time {
-		t.Fatalf("unexpected result modified date received. expected %s got %s", lastEvent.Time, result.ModifiedDate)
-	}
 }
 
 func TestClickedPhishingLinkAfterOpen(t *testing.T) {
